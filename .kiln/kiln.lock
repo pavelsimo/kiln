@@ -1,0 +1,31 @@
+# Written by kiln init and kiln update. Don't edit: kiln uses these hashes to
+# tell your edits apart from files it can safely replace.
+version: e6ed44b
+files:
+    skills/kiln-build/SKILL.md: sha256:8611971621d2da012ab54887866094c20122afd4dd176573c0e19e86707db196
+    skills/kiln-commit/SKILL.md: sha256:87b14b6c2b819366db9aabf2012993c7f1aefa93e36e099de70ddcda58996f0b
+    skills/kiln-explore/SKILL.md: sha256:6c7af00f3690ef399029a86c19c46b22322914d3708ce0eb513e03edd166f869
+    skills/kiln-issue/SKILL.md: sha256:343e4d304107aa150bd5e81ed6b28fa3f33077f9490e629384e435c4c2a5837b
+    skills/kiln-log/SKILL.md: sha256:ebc75ed06f6b60a03fe74dd6d167f1dd876379a613998cf671f5955e13d1781b
+    skills/kiln-merge/SKILL.md: sha256:4df558fa7c360edb23f5cab62870877ccef65461462e036b89b086eeeda3fe7d
+    skills/kiln-onboard/SKILL.md: sha256:20167731ed0d1eb7e03acfb92e722703a9c606c62f6d490f6046933245c1d93e
+    skills/kiln-plan/SKILL.md: sha256:4785f8a298bef899ab1f10f6eeb7caf14c494dfa335191985c46fcf69de508b0
+    skills/kiln-pr/SKILL.md: sha256:6d2986ddadee9aa218ecdd3e8071ea3331cb923fa5be4ac704fce7a2f162d275
+    skills/kiln-recall/SKILL.md: sha256:c05a901cd06e22749c2cbbb8dc0691f959df042ef782003bc98c42414111402b
+    skills/kiln-release/SKILL.md: sha256:63ddba289435a3f44d7a9195c957d801ae3562be0ebd72c373fd628ee969668f
+    skills/kiln-resume/SKILL.md: sha256:a716333ecf8d4a8a97219cb91b49f5ff13edbe79d9ae52538fbb91bc83ed0d65
+    skills/kiln-retro/SKILL.md: sha256:8d99fb7bdb9954499804d110b0ea5244a2275960153b33267fb98f66763534f7
+    skills/kiln-review/SKILL.md: sha256:0ed9138e02ffb8d8509dd6b14ce63223a6e2c338c717784acd04e84bc054f18a
+    skills/kiln-start/SKILL.md: sha256:89b0a48a9ebc177f07d362e9fd6675eadd6cd90d617af986ba0767c675e03faa
+    skills/kiln-status/SKILL.md: sha256:de7bb350f808a84308007b345795f248df0acc59431c9bd5a1bdac94ddcb16b8
+    skills/kiln-triage/SKILL.md: sha256:18805f84b8fba9fa10b822ed3539916136dd82cd8da777c5b1a527926f82a02e
+    skills/kiln-verifier/SKILL.md: sha256:aa1a7ce080b82827fdecba27d312dc588a921fc1281305f6ff28b469515ec262
+    skills/kiln-verify/SKILL.md: sha256:6f667cffdd50c23e4b5e3911e94def94fdd21f9432817268bbff931df80f7221
+    skills/kiln-watch/SKILL.md: sha256:2d6998ba13658b25ac54920d2834dd5a85ddc542b286d577ebbcaa0a47a48d84
+    skills/kiln/SKILL.md: sha256:f7b933e60aadea439acd3e9fcc2a286695f698aa7c99fef6f076eff8c7b05c4a
+    skills/kiln/playbooks/bug.md: sha256:dd980c9b925eb90b35b1e405cbe61f826726fed361228790b4746bd6ced40c15
+    skills/kiln/playbooks/chore.md: sha256:06431664cb3b70b31e38195e42235e81caa3d4463f62f689ee20cd5782da168c
+    skills/kiln/playbooks/feature.md: sha256:2211c7f785fd02f9c72b5285dfc0a4976c9e3ccd2e694a5c43c1006681ff0808
+    skills/kiln/playbooks/investigate.md: sha256:d9d41618ba592de38f71b5aba3b5e5c9511749e71399eb04e4233673c7b5a124
+    skills/kiln/playbooks/refactor.md: sha256:1959c42e76546df81b9f647a8dd3e65af1b2fd2b6e608457cfe311ba6209cadd
+    skills/kiln/playbooks/release.md: sha256:daa8f0b71370df236bd44570f6612937ddcb34daf1f69298e6ceb92964c0d323

@@ -1,0 +1,21 @@
+# Standing checks. kiln checks matches them against the files a branch touched,
+# and kiln-verify proves each one that applies, next to the issue's predicates.
+# kiln-onboard seeds this list from your CI; kiln-retro adds checks it graduates
+# from strong lessons, always through a PR.
+
+- id: ci-gate
+  when: { paths: ["**/*.go", "go.mod", "go.sum", ".golangci.yml"] }
+  predicate: make ci exits 0 (fmt-check, lint, test, build)
+  blocking: true
+  from: .github/workflows/ci.yml · job Test
+
+- id: docs-no-dashes
+  when: { paths: ["docs/**", "internal/assets/skills/**", "README.md"] }
+  predicate: grep -rnP '\x{2014}|\x{2013}' docs internal/assets/skills README.md finds nothing
+  blocking: true
+  from: .github/workflows/pages.yml · job Build
+
+- id: skills-match-cli
+  when: { paths: ["cmd/**", "internal/assets/skills/**"] }
+  predicate: every kiln command and flag named in a SKILL.md exists in kiln <cmd> --help
+  blocking: true

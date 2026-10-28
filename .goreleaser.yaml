@@ -30,9 +30,11 @@ archives:
 checksum:
   name_template: checksums.txt
 
+# Release notes come from CHANGELOG.md (written by kiln-release): release.yml passes
+# the version's section with --release-notes, which replaces the generated changelog.
+# Don't set changelog.disable, it blanks those notes too.
 changelog:
-  # Release notes come from CHANGELOG.md (written by kiln-release), see release.yml
-  disable: true
+  sort: asc
 
 brews:
   - name: kiln

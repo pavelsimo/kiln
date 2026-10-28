@@ -1,0 +1,57 @@
+version: 2
+
+project_name: kiln
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X github.com/pavelsimo/kiln/cmd.Version={{.Version}}
+    main: .
+
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  # Release notes come from CHANGELOG.md (written by kiln-release), see release.yml
+  disable: true
+
+brews:
+  - name: kiln
+    repository:
+      owner: pavelsimo
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/pavelsimo/kiln
+    description: A software factory you install into your repo.
+    license: MIT
+    install: |
+      bin.install "kiln"
+    test: |
+      system "#{bin}/kiln", "version"
+
+release:
+  github:
+    owner: pavelsimo
+    name: kiln
+  draft: false
+  prerelease: auto

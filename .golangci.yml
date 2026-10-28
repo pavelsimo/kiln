@@ -1,0 +1,57 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - gosec
+    - revive
+    - gocritic
+    - misspell
+    - unused
+    - gocyclo
+    - ineffassign
+    - bodyclose
+    - nilerr
+    - goconst
+    - prealloc
+    - unparam
+    - whitespace
+  settings:
+    errcheck:
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+    gosec:
+      excludes:
+        - G204 # kiln runs git and gh with arguments it builds itself
+        - G301 # repo folders are meant to be 0755
+        - G304 # kiln reads files inside the repo by design
+        - G306 # repo files are meant to be 0644
+        - G122 # walks copy kiln's own skill folders inside the repo
+        - G703 # paths come from the repo root kiln was run in
+    gocyclo:
+      min-complexity: 50
+    goconst:
+      min-len: 3
+      min-occurrences: 5
+    revive:
+      rules:
+        - name: exported
+          arguments:
+            - disableStutteringCheck
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - gosec
+          - errcheck
+          - goconst
+          - prealloc
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

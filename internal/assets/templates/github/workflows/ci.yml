@@ -1,0 +1,36 @@
+# Written by kiln init. kiln-onboard replaces the placeholder step below with
+# your project's real lint, test and build commands.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title:
+    name: PR title
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gitmoji + Conventional Commits
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if ! printf '%s' "$TITLE" | grep -Pq '^\S+ (feat|fix|refactor|perf|docs|test|chore|ci|build|style|revert|deps|security)(\([a-z0-9._/-]+\))?!?: .+'; then
+            echo "PR title should look like: ✨ feat: add dark mode to settings"
+            exit 1
+          fi
+
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: kiln placeholder
+        run: echo "Run /kiln-onboard so kiln can put your lint, test and build commands here."

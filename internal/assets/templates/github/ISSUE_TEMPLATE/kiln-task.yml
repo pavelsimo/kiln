@@ -1,0 +1,40 @@
+name: Kiln task
+description: A unit of work kiln can plan, build, prove and ship.
+labels: ["kiln:needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What's wrong or missing today, and who feels it.
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: Acceptance criteria
+      description: >
+        Outcomes you can observe, one per line (P1, P2, ...). Include at least one
+        "must not change". kiln-verify proves each one on the real surface.
+      placeholder: |
+        - P1 the theme toggle shows up in Settings → Appearance
+        - P2 the choice survives a reload
+        - P3 must not change: the light theme looks exactly as before
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What this task deliberately leaves alone.
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      options: [feature, bug, refactor, chore, docs]
+  - type: dropdown
+    id: size
+    attributes:
+      label: Size
+      description: "S: one area, about 100 lines. M: several modules or a public interface. L: cross-cutting, migrations, security or data."
+      options: [S, M, L]

@@ -1,0 +1,36 @@
+# kiln config. Written by kiln init; edit freely, kiln update never touches it.
+version: 1
+
+# How often kiln stops for you: manual | gated | autopilot
+autonomy: gated
+# The gates used when autonomy is gated
+gates: [plan, merge]
+
+# How hard kiln checks its own work, by size label
+rigor:
+  S: { verify: self, review: self }
+  M: { verify: fresh, review: independent }
+  L: { verify: swarm, review: adversarial, force_gates: [plan] }
+
+verify:
+  dir: .kiln/verify        # DRIVER.md · features/ · checks.yaml
+  live: [ui, api]          # surfaces that need evidence step 5 at M and L
+
+conventions:
+  commits: gitmoji-conventional
+  branch: "kiln/{issue}-{slug}"
+  merge: squash
+  pr: ready                # never draft
+
+worktrees:
+  dir: "../{repo}.kiln"
+  max_in_flight: 3
+
+release:
+  tag: "v{version}"
+  changelog: CHANGELOG.md
+  version_files: []        # e.g. [package.json]
+  publish: auto            # auto | gh | tag
+
+agents: [claude, codex, cursor]
+github: { labels: true, templates: true, ci: true }

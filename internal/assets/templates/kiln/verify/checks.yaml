@@ -1,0 +1,10 @@
+# Standing checks. kiln checks matches them against the files a branch touched,
+# and kiln-verify proves each one that applies, next to the issue's predicates.
+# kiln-onboard seeds this list from your CI; kiln-retro adds checks it graduates
+# from strong lessons, always through a PR.
+#
+# - id: migrations-reversible
+#   when: { paths: ["db/migrations/**"] }
+#   predicate: rollback one step, then migrate again; both exit 0, schema diff is empty
+#   blocking: true
+[]

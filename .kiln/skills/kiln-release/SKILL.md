@@ -48,9 +48,9 @@ Strip a leading `v` before passing `--version`.
    Exit 3 means the tag already exists or nothing releasable merged since the last tag: report which and stop. Otherwise keep `version`, `tag`, `last_tag`, `rule`, `commits`, `sections`, `left_out`, `changelog` and `compare_url`. Show the rule line and the counts:
 
    ```
-   KILN release · acme/app · v1.3.0 → v1.4.0
+   KILN release · v1.3.0 → v1.4.0
    rule   ✨ feat in 2 PRs → minor
-   since  v1.3.0 · 6 merged PRs · 3 left out
+   since  v1.3.0 · 6 commits · 3 left out
    ```
 
    The version is the binary's answer. If the person disagrees, rerun with `--version`; do not edit the number by hand.

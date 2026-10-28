@@ -81,7 +81,10 @@ func printFloor(u *ui.UI, f status.Floor) {
 			cols = append(cols, ci)
 		}
 		if wait != "" {
-			cols = append(cols, "·", wait)
+			if ci != "" {
+				cols = append(cols, "·")
+			}
+			cols = append(cols, wait)
 		}
 		u.Println(strings.Join(cols, " "))
 	}
@@ -96,7 +99,11 @@ func printFloor(u *ui.UI, f status.Floor) {
 	}
 	u.Println(u.Dim(line))
 	if f.RetroQueue > 0 {
-		u.Println(u.Dim(fmt.Sprintf("memory   %d retro notes queued for kiln-retro", f.RetroQueue)))
+		noun := "notes"
+		if f.RetroQueue == 1 {
+			noun = "note"
+		}
+		u.Println(u.Dim(fmt.Sprintf("memory   %d retro %s queued for kiln-retro", f.RetroQueue, noun)))
 	}
 	if len(f.Stale) > 0 {
 		u.Println(u.Dim("stale    " + strings.Join(f.Stale, ", ") + " (git worktree remove)"))

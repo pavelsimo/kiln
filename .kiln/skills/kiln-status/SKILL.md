@@ -31,7 +31,7 @@ A thin wrapper around the binary's `kiln status`. Status is a fact, so the binar
    #43  🐛 login redirect loop   S  ship   PR #58  ✓ green · ◆2 you
    #47  ♻️ rate limiter refactor L  shape  no PR   ◆1 you · plan ready
    backlog  6 ready · 2 need triage · 1 blocked (#39)
-   memory   3 lessons queued for kiln-retro
+   memory   3 retro notes queued for kiln-retro
    ```
 
    CI comes from `pr.checks` (`passed/total`, with failing or pending called out). "Waiting on you" is the count of items whose `waiting` is not empty.
@@ -48,7 +48,7 @@ A thin wrapper around the binary's `kiln status`. Status is a fact, so the binar
 5. Add backlog and memory suggestions only when they apply:
    - `backlog.needs_triage > 0`: suggest `/kiln-triage`.
    - `backlog.blocked` not empty: suggest `gh issue view <n> --comments` to read why each one is blocked.
-   - `retro_queue > 0`: suggest `/kiln-retro`.
+   - `retro_queue` of 5 or more: suggest `/kiln-retro`.
    - Nothing in flight and `backlog.ready > 0`: suggest `/kiln` to start the next ready issue.
 
 6. If the person answers with an action ("merge #43", "show me the plan for #47"), hand it to the skill that owns it (`kiln-merge`, `kiln-plan`, `kiln-resume`). Status itself does nothing more.

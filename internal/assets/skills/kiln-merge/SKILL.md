@@ -50,7 +50,7 @@ This is gate ◆2, the last stop before main. Every fact on the gate comes from 
    Show the gate from the `kiln ready` JSON:
    ```
    ◆ gate 2 · merge PR #57?
-     ✨ feat: add dark mode to settings (#42)
+     ✨ feat: add dark mode to settings (#57)
      ✓ checks 6/6 · ✓ threads resolved · ✓ 4/4 VERIFIED · ✓ review PASS on a1c9e0f
      next  squash merge · close #42 · remove worktree and branch
    ```

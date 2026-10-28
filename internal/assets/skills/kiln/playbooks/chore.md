@@ -36,9 +36,10 @@ Copy these lines into the todo list word for word, filling the `<placeholders>`.
 |------|-----------|-------|
 | 2 kiln-issue | the chore arrived as an existing issue | `skip: kiln-issue · #<n> already exists` |
 | 3 kiln-plan | usually. Run it if the chore is size L or forces a choice (a major version with breaking changes, a config that changes behavior) | `skip: kiln-plan · chore with no design decision` |
-| 8 kiln-review | size S and the diff is mechanical (lockfile, version bump, typo) | `skip: kiln-review · S chore, mechanical diff` |
 
 ## Notes
+
+- Never skip kiln-review, even for a one-line chore. `kiln ready` needs a fresh PASS row before it lets anything merge. For a mechanical S diff the self-review checklist takes a minute; run it and log the row.
 
 - Gitmoji: `⬆️` dependency bumps, `🔧` config, `📝` docs (`📝 docs: …`), `🔥` removal, `👷` CI. The emoji decides whether the change shows up in the next release, so pick it honestly.
 - Step 7 still produces a real verdict. The predicates are short ("`pnpm lint` exits 0", "`pnpm build` exits 0", "docs site builds with no broken links") plus whatever `kiln checks --json` matches.

@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Get started with kiln</title>
+<meta name="description" content="Install kiln, put it in your repo, introduce it to your project and ship a first task.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* The inside of a kiln: dark first, each lifecycle stage keeps its incandescence color. */
+:root {
+  --bg: #14100d; --bg-2: #1a1511; --surface: #201914; --surface-2: #2a211a;
+  --line: #3d3128; --line-soft: #2b231c;
+  --fg: #f4e9dd; --fg-2: #cdbdad; --muted: #9b8a7a;
+  --ember: #ff6b2b; --amber: #ffae42;
+  --glow: rgba(255, 107, 43, .14); --glow-2: rgba(255, 174, 66, .10);
+  --s-gather: #b48767; --s-shape: #e0503a; --s-fire: #ff6b2b; --s-glaze: #ffae42; --s-ship: #ffe1a1; --s-temper: #8fabbb;
+  --ok: #7ccb9c; --crit: #ff6a5c;
+  --term-bg: #0f0c0a; --term-fg: #f1e5d8; --term-dim: #8c7d70; --term-ok: #7ccb9c; --term-hot: #ffae42; --term-bad: #ff7a6b;
+  --font-display: "Big Shoulders Display", "Oswald", "Arial Narrow", Impact, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #ede5db; --bg-2: #e6ddd1; --surface: #f8f3ed; --surface-2: #efe7dd;
+    --line: #d4c6b6; --line-soft: #e0d5c8;
+    --fg: #23180f; --fg-2: #4c3b2e; --muted: #7b6757;
+    --ember: #c2410c; --amber: #a85b05;
+    --glow: rgba(194, 65, 12, .10); --glow-2: rgba(168, 91, 5, .08);
+    --s-gather: #8a5f43; --s-shape: #b3301c; --s-fire: #d4470e; --s-glaze: #b26a00; --s-ship: #8c6a12; --s-temper: #4a6b7d;
+    --ok: #2f7d50; --crit: #c0352a;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #ede5db; --bg-2: #e6ddd1; --surface: #f8f3ed; --surface-2: #efe7dd;
+  --line: #d4c6b6; --line-soft: #e0d5c8;
+  --fg: #23180f; --fg-2: #4c3b2e; --muted: #7b6757;
+  --ember: #c2410c; --amber: #a85b05;
+  --glow: rgba(194, 65, 12, .10); --glow-2: rgba(168, 91, 5, .08);
+  --s-gather: #8a5f43; --s-shape: #b3301c; --s-fire: #d4470e; --s-glaze: #b26a00; --s-ship: #8c6a12; --s-temper: #4a6b7d;
+  --ok: #2f7d50; --crit: #c0352a;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 80px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 16px/1.65 var(--font-body); -webkit-font-smoothing: antialiased; }
+a { color: var(--ember); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; border-radius: 4px; }
+code { font-family: var(--font-mono); font-size: .86em; background: var(--surface-2); border: 1px solid var(--line-soft); padding: .06em .36em; border-radius: 5px; overflow-wrap: anywhere; }
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+strong { font-weight: 600; color: var(--fg); }
+.wrap { max-width: 1120px; margin-inline: auto; padding-inline: 24px; }
+@media (max-width: 600px) { .wrap { padding-inline: 16px; } }
+
+/* page head */
+.page-head { position: relative; overflow: hidden; border-bottom: 1px solid var(--line-soft); padding-block: 56px 44px; }
+.page-head::before { content: ""; position: absolute; inset: auto -10% -60% 40%; height: 120%; background: radial-gradient(closest-side, var(--glow), transparent 70%); pointer-events: none; }
+.page-head .wrap { position: relative; }
+.eyebrow { font: 600 11.5px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ember); }
+.page-head h1 { font: 800 clamp(44px, 7vw, 76px)/.92 var(--font-display); letter-spacing: .005em; margin-top: 12px; }
+.page-head .lede { margin-top: 16px; max-width: 62ch; color: var(--fg-2); font-size: 17.5px; }
+.page-head .meta { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: 500 12px/1 var(--font-mono); color: var(--fg-2); border: 1px solid var(--line); background: var(--surface); padding: 7px 10px; border-radius: 999px; }
+
+/* doc layout: a rail of sections, then a readable column */
+.doc { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 48px; padding-block: 40px 72px; }
+.toc { position: sticky; top: 82px; align-self: start; display: grid; gap: 2px; font: 500 13px/1.35 var(--font-body); }
+.toc .label { font: 600 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.toc a { color: var(--fg-2); text-decoration: none; padding: 6px 10px; border-left: 2px solid var(--line-soft); }
+.toc a:hover { color: var(--fg); border-left-color: var(--muted); }
+.toc a.on { color: var(--ember); border-left-color: var(--ember); }
+.toc a code { background: none; border: 0; padding: 0; font-size: .92em; }
+@media (max-width: 900px) { .doc { grid-template-columns: minmax(0, 1fr); gap: 24px; } .toc { display: none; } }
+article { min-width: 0; max-width: 760px; display: grid; gap: 56px; }
+article section { display: grid; gap: 16px; min-width: 0; }
+article h2 { font: 800 clamp(30px, 4vw, 40px)/1 var(--font-display); letter-spacing: .01em; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+article h2 .step { font: 600 12px/1 var(--font-mono); color: var(--ember); letter-spacing: .08em; border: 1px solid var(--line); border-radius: 999px; padding: 6px 9px; transform: translateY(-4px); }
+article h3 { font: 600 17px/1.35 var(--font-body); margin-top: 6px; }
+article p, article li { color: var(--fg-2); max-width: 68ch; }
+article ul, article ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+
+/* terminals stay dark in both themes */
+.term { background: var(--term-bg); color: var(--term-fg); border: 1px solid var(--line); border-radius: 12px; font: 400 13px/1.7 var(--font-mono); padding: 12px 16px 14px; overflow-x: auto; white-space: pre; margin: 0; }
+.term .bar { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font: 500 10.5px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--term-dim); }
+.term .bar i { width: 8px; height: 8px; border-radius: 50%; background: #3a2f27; }
+.term .bar span { margin-left: 6px; }
+.term .d { color: var(--term-dim); }
+.term .k { color: var(--term-ok); }
+.term .h { color: var(--term-hot); }
+.term .x { color: var(--term-bad); }
+.term .e { color: #ff8a4c; }
+
+/* callouts and tables */
+.note { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 14px 16px; color: var(--fg-2); display: grid; gap: 6px; }
+.note b.t { font: 600 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--amber); }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+th { font: 600 11px/1.2 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); background: var(--surface); }
+tr:last-child td { border-bottom: 0; }
+td { color: var(--fg-2); }
+td:first-child { white-space: nowrap; }
+td code { white-space: nowrap; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.opt { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.opt h3 { margin: 0; font: 700 22px/1 var(--font-display); letter-spacing: .02em; }
+.opt p { font-size: 14.5px; }
+.opt .term { font-size: 12px; padding: 10px 12px; }
+.next { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.next a { display: grid; gap: 6px; text-decoration: none; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 16px; color: var(--fg-2); font-size: 14.5px; }
+.next a b { font: 700 22px/1 var(--font-display); color: var(--fg); letter-spacing: .02em; }
+.next a:hover { border-color: var(--ember); }
+
+/* ── site shell: shared header and footer ───────────────────── */
+.top { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line-soft); }
+.top .wrap { display: flex; align-items: center; justify-content: flex-start; gap: 14px; height: 58px; }
+.brand { display: flex; align-items: baseline; text-decoration: none; color: var(--fg); flex: none; }
+.brand b { font: 800 26px/1 var(--font-display); letter-spacing: .02em; background: linear-gradient(100deg, var(--s-shape), var(--ember) 45%, var(--amber)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+nav.site { display: flex; gap: 2px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+nav.site::-webkit-scrollbar { display: none; }
+nav.site a { flex: none; font: 500 12px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-decoration: none; padding: 9px 10px; border-radius: 7px; }
+nav.site a:hover { color: var(--fg); background: var(--surface-2); }
+nav.site a[aria-current="page"] { color: var(--ember); background: var(--glow); }
+nav.site a:focus-visible, .theme-btn:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.theme-btn { flex: none; display: inline-flex; align-items: center; gap: 8px; background: var(--surface); color: var(--fg-2); border: 1px solid var(--line); font: 500 12px/1 var(--font-mono); padding: 8px 11px; border-radius: 999px; cursor: pointer; }
+.theme-btn:hover { color: var(--fg); border-color: var(--muted); }
+.theme-btn i { width: 10px; height: 10px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 10px var(--ember); }
+@media (max-width: 520px) { .theme-btn span { display: none; } .theme-btn { padding: 8px; } }
+footer.site-foot { border-top: 1px solid var(--line-soft); padding-block: 28px 40px; margin-top: 0; }
+footer.site-foot .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; font: 500 12px/1.6 var(--font-mono); color: var(--muted); }
+footer.site-foot b { color: var(--ember); font-weight: 600; }
+footer.site-foot a { color: var(--fg-2); }
+footer.site-foot code { font: inherit; color: var(--fg-2); background: none; border: 0; padding: 0; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><b>kiln</b></a>
+    <nav class="site" aria-label="Docs">
+      <a href="getting-started.html" aria-current="page">Get started</a>
+      <a href="tutorial.html">Tutorial</a>
+      <a href="concepts.html">Concepts</a>
+      <a href="skills.html">Skills</a>
+      <a href="cli.html">CLI</a>
+      <a href="https://github.com/pavelsimo/kiln">GitHub</a>
+    </nav>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle color theme"><i aria-hidden="true"></i><span id="themeLbl">Light</span></button>
+  </div>
+</header>
+
+<main>
+  <div class="page-head"><div class="wrap">
+    <div class="eyebrow">Get started</div>
+    <h1>From zero to a first PR</h1>
+    <p class="lede">Install the binary, run one command in your repo, let your agent learn the project, and hand kiln its first task. It takes about ten minutes, most of it reading what kiln wrote.</p>
+    <div class="meta"><span class="chip">about 10 minutes</span><span class="chip">macOS · Linux · Windows</span><span class="chip">Claude Code · Codex · Cursor</span></div>
+  </div></div>
+
+  <div class="wrap doc">
+    <nav class="toc" aria-label="On this page">
+      <div class="label">On this page</div>
+      <a href="#before">Before you start</a>
+      <a href="#install">Install the binary</a>
+      <a href="#init">Install it into your repo</a>
+      <a href="#onboard">Introduce kiln to your project</a>
+      <a href="#doctor">Check the setup</a>
+      <a href="#first">Your first task</a>
+      <a href="#autonomy">Choose how often it stops</a>
+      <a href="#update">Stay current</a>
+      <a href="#next">Where next</a>
+    </nav>
+    <article>
+    <section id="before">
+<h2>Before you start</h2>
+<p>Kiln lives inside a GitHub repo and works through the tools you already have. Make sure these three are in place:</p>
+<ul>
+  <li><strong>A git repo with a GitHub remote</strong> named <code>origin</code>. Issues, labels and pull requests are where kiln keeps its state.</li>
+  <li><strong>The GitHub CLI, logged in.</strong> Run <code>gh auth status</code>. If it complains, <code>gh auth login</code> fixes it.</li>
+  <li><strong>A coding agent</strong> that reads skills: Claude Code, Codex or Cursor. Kiln links its skills into all three.</li>
+</ul>
+    </section>
+
+    <section id="install">
+<h2><span class="step">step 1</span>Install the binary</h2>
+<p>Kiln is one small Go binary with every skill baked in. Pick whichever install suits you.</p>
+<div class="opts">
+  <div class="opt"><h3>Homebrew</h3><p>macOS and Linux.</p><pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>terminal</span></div><span class="d">$</span> brew install pavelsimo/tap/kiln</pre></div>
+  <div class="opt"><h3>Go</h3><p>Needs Go 1.25 or newer.</p><pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>terminal</span></div><span class="d">$</span> go install github.com/pavelsimo/kiln@latest</pre></div>
+  <div class="opt"><h3>Download</h3><p>Grab a build for Linux, macOS or Windows from <a href="https://github.com/pavelsimo/kiln/releases">GitHub Releases</a> and put it on your <code>PATH</code>.</p></div>
+</div>
+<p>Check that it worked:</p>
+<pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>terminal</span></div><span class="d">$</span> kiln version
+kiln 0.1.0</pre>
+    </section>
+
+    <section id="init">
+<h2><span class="step">step 2</span>Install it into your repo</h2>
+<p>From anywhere inside your repo, run <code>kiln init</code>. It checks git and gh first, then sets everything up in one go.</p>
+<pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>terminal</span></div><span class="d">$</span> kiln init
+  <span class="k">✓</span> git repo · gh authenticated as you
+  <span class="k">✓</span> .kiln/ written · 21 skills · config.yaml · kiln.lock <span class="d">(41 created)</span>
+  <span class="k">✓</span> linked → .claude/skills  .agents/skills  .cursor/skills
+  <span class="k">✓</span> 14 labels · issue + PR templates · ci.yml
+  next: run <span class="e">/kiln-onboard</span> in your agent</pre>
+<p>Here's what that wrote:</p>
+<div class="tbl"><table>
+  <tr><th>Where</th><th>What</th></tr>
+  <tr><td><code>.kiln/skills/</code></td><td>The <code>/kiln</code> router, its six playbooks and twenty <code>kiln-*</code> skills.</td></tr>
+  <tr><td><code>.kiln/config.yaml</code></td><td>Autonomy, gates, rigor by size, conventions. Sensible defaults; yours to edit.</td></tr>
+  <tr><td><code>.kiln/memory/</code></td><td>An empty <code>PROJECT.md</code>, <code>lessons.md</code>, and folders for decisions and task journals.</td></tr>
+  <tr><td><code>.kiln/verify/</code></td><td>Where the app driver and standing checks will live. <code>evidence/</code> is gitignored.</td></tr>
+  <tr><td><code>.kiln/kiln.lock</code></td><td>A fingerprint of every skill file, so <code>kiln update</code> can tell your edits from its own.</td></tr>
+  <tr><td><code>.claude/skills/</code> and friends</td><td>One symlink per skill, so every agent reads the same files.</td></tr>
+  <tr><td><code>AGENTS.md</code>, <code>CLAUDE.md</code></td><td>A small marked block that points any agent at the router. Everything outside the markers is yours.</td></tr>
+  <tr><td>GitHub</td><td>Fourteen labels, an issue form, a PR template and a starter <code>ci.yml</code>.</td></tr>
+</table></div>
+<p>Kiln never overwrites files that already exist. If you have your own <code>ci.yml</code> or PR template, it leaves them alone. Running <code>kiln init</code> twice is harmless.</p>
+<div class="note"><b class="t">Handy flags</b>
+  <span><code>--agents claude,codex</code> links only the agents you name. <code>--dry-run</code> shows what would change. <code>--no-github</code> skips gh and the labels. <code>--force</code> refreshes skills and GitHub templates, but never touches your config, memory or verify files.</span>
+</div>
+<p>Commit the result so your whole team (and every agent) gets it:</p>
+<pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>terminal</span></div><span class="d">$</span> git add .kiln .claude .agents .cursor .github AGENTS.md CLAUDE.md
+<span class="d">$</span> git commit -m &quot;🔧 chore: install kiln&quot;
+<span class="d">$</span> git push</pre>
+    </section>
+
+    <section id="onboard">
+<h2><span class="step">step 3</span>Introduce kiln to your project</h2>
+<p>The binary can't read your code, so the next step happens in your agent. Open Claude Code, Codex or Cursor in the repo and run:</p>
+<pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>your agent</span></div><span class="d">›</span> /kiln-onboard</pre>
+<p>The onboard skill reads your manifests and CI to find the real commands, then:</p>
+<ul>
+  <li>writes <code>.kiln/memory/PROJECT.md</code>: your stack, your test, lint, build and e2e commands, your conventions, and the paths kiln should never touch without asking</li>
+  <li>swaps the placeholder step in kiln's starter <code>ci.yml</code> for those real commands</li>
+  <li>seeds <code>.kiln/verify/checks.yaml</code> with standing checks from your CI</li>
+  <li>hands off to <code>kiln-verifier</code>, which learns how to launch and drive your app and proves it with one full run</li>
+</ul>
+<p>All of it lands as one PR, <code>🔧 chore(kiln): onboard &lt;repo&gt;</code>, for you to read and merge.</p>
+    </section>
+
+    <section id="doctor">
+<h2><span class="step">step 4</span>Check the setup</h2>
+<p><code>kiln doctor</code> looks at everything kiln depends on and tells you what to fix. Warnings are fine to live with. It exits with 3 only when something is actually broken.</p>
+<pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>terminal</span></div><span class="d">$</span> kiln doctor
+  <span class="k">✓</span> git repo app
+  <span class="k">✓</span> origin is git@github.com:acme/app.git
+  <span class="k">✓</span> gh authenticated as you
+  <span class="k">✓</span> 14 kiln labels present
+  <span class="k">✓</span> config valid · autonomy gated
+  <span class="k">✓</span> 21 skills, all match kiln.lock
+  <span class="k">✓</span> .claude/skills: 21 skills linked
+  <span class="k">✓</span> .agents/skills: 21 skills linked
+  <span class="k">✓</span> .cursor/skills: 21 skills linked
+  <span class="k">✓</span> worktrees go in ../app.kiln · 0 in use
+  <span class="k">✓</span> driver current · 4 features</pre>
+    </section>
+
+    <section id="first">
+<h2><span class="step">step 5</span>Your first task</h2>
+<p>Hand kiln a sentence. The router restates the goal, sizes it, picks a playbook and copies its steps into your agent's todo list.</p>
+<pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>your agent</span></div><span class="d">›</span> /kiln &quot;add a dark mode toggle to settings&quot;
+  goal   Users can switch Settings to a dark theme, and the choice sticks.
+  type   feature · size M · playbook feature · autonomy gated
+  <span class="k">✓</span> #42 opened · 3 predicates · plan posted
+  <span class="h">◆ gate 1</span> the plan for #42 is waiting for you</pre>
+<p>Read the plan on the issue. Say yes and kiln builds it in its own worktree, test first, then proves every acceptance criterion on the real app, gets a review, opens the PR and takes it to green. It stops once more before merging:</p>
+<pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>your agent</span></div>  <span class="k">✓</span> 3/3 predicates VERIFIED on a1c9e0f
+  <span class="k">✓</span> review PASS · PR #57 · CI 6/6 green
+  <span class="h">◆ gate 2</span> merge #57? <span class="e">▍</span></pre>
+<p>Say yes again and <code>kiln merge</code> squash merges it, but only if <code>kiln ready</code> agrees that CI is green, nobody asked for changes, and the verdict still matches the code. Then it cleans up the worktree and branch.</p>
+<p>Any time you want the big picture, ask for the factory floor:</p>
+<pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>terminal</span></div><span class="d">$</span> kiln status
+<span class="e">KILN · acme/app · 2 in flight · 1 waiting on you</span>
+#42   ✨ add dark mode to settings   M  glaze  PR #57  <span class="h">● CI 4/6</span>
+#43   🐛 login redirect loop          S  ship   PR #58  <span class="k">✓ green</span> · <span class="e">◆2 you</span>
+<span class="d">backlog  6 ready · 2 need triage · 1 blocked (#39)</span></pre>
+    </section>
+
+    <section id="autonomy">
+<h2>Choose how often it stops</h2>
+<p>The default, <code>gated</code>, stops at the two gates: before any code is written and before the merge. You can change that in <code>.kiln/config.yaml</code>:</p>
+<pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>.kiln/config.yaml</span></div><span class="d"># How often kiln stops for you: manual | gated | autopilot</span>
+autonomy: gated
+gates: [plan, merge]</pre>
+<div class="tbl"><table>
+  <tr><th>Mode</th><th>What happens</th></tr>
+  <tr><td><code>manual</code></td><td>Runs one skill, reports, and waits for you. A good way to start trusting it.</td></tr>
+  <tr><td><code>gated</code></td><td>Runs the whole playbook and waits at ◆1 (the plan) and ◆2 (the merge).</td></tr>
+  <tr><td><code>autopilot</code></td><td>Goes from task to merged PR while <code>kiln ready</code> passes. Size L tasks still stop at the plan.</td></tr>
+</table></div>
+<p>Some things stop in every mode, no matter what: force-pushing a shared branch, deleting unmerged work, releasing or tagging, merging with failing checks, changing secrets or repo settings, and messaging anyone outside the repo.</p>
+    </section>
+
+    <section id="update">
+<h2>Stay current</h2>
+<p>New versions of kiln ship new versions of the skills. Upgrade the binary, then let it refresh what's installed:</p>
+<pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>terminal</span></div><span class="d">$</span> brew upgrade kiln
+<span class="d">$</span> kiln update --dry-run
+<span class="d">dry run: nothing was written</span>
+  <span class="k">✓</span> replace   .kiln/skills/kiln-watch/SKILL.md
+  <span class="h">!</span> you edited .kiln/skills/kiln-commit/SKILL.md · new version in .kiln/skills/kiln-commit/SKILL.md.kiln-new
+  <span class="d">2 changes · kiln 0.2.0</span>
+<span class="d">$</span> kiln update</pre>
+<p>Files you never touched are replaced. Files you edited are kept exactly as they are, and the new version lands next to them as <code>.kiln-new</code> so you can merge the two by hand. <code>kiln doctor</code> reminds you about any <code>.kiln-new</code> files still waiting.</p>
+    </section>
+
+    <section id="next">
+<h2>Where next</h2>
+<div class="next">
+  <a href="tutorial.html"><b>Tutorial</b>A first week with kiln: a feature, a bug, parallel tasks and a release.</a>
+  <a href="concepts.html"><b>Concepts</b>Stages, gates, labels, verification and memory, explained.</a>
+  <a href="skills.html"><b>Skills</b>All 21 skills, what they read and what they write.</a>
+  <a href="cli.html"><b>CLI</b>Every command, flag, JSON shape and exit code.</a>
+</div>
+    </section>
+    </article>
+  </div>
+</main>
+
+<footer class="site-foot"><div class="wrap">
+  <span><b>kiln</b> · MIT licensed · <a href="https://github.com/pavelsimo/kiln">github.com/pavelsimo/kiln</a></span>
+  <span>Fire it up: <code>kiln init</code></span>
+</div></footer>
+
+<script>
+(function () {
+  var root = document.documentElement, btn = document.getElementById('themeBtn'), lbl = document.getElementById('themeLbl');
+  function effective() {
+    var t = root.getAttribute('data-theme');
+    if (t) return t;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  function sync() { lbl.textContent = effective() === 'dark' ? 'Light' : 'Dark'; }
+  try { var saved = localStorage.getItem('kiln-theme'); if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved); } catch (e) {}
+  sync();
+  btn.addEventListener('click', function () {
+    var next = effective() === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('kiln-theme', next); } catch (e) {}
+    sync();
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-copy]'), function (b) {
+    b.addEventListener('click', function () {
+      var text = b.getAttribute('data-copy');
+      function done() { var old = b.textContent; b.textContent = 'Copied'; setTimeout(function () { b.textContent = old; }, 1400); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () {});
+      }
+    });
+  });
+})();
+</script>
+<script>
+(function () {
+  var links = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toc a'), function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  var current = null, secs = Array.prototype.slice.call(document.querySelectorAll('article section[id]'));
+  if (!('IntersectionObserver' in window)) return;
+  var vis = {};
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { vis[e.target.id] = e.isIntersecting; });
+    for (var i = 0; i < secs.length; i++) {
+      if (vis[secs[i].id]) {
+        if (current && links[current]) links[current].classList.remove('on');
+        current = secs[i].id; if (links[current]) links[current].classList.add('on');
+        break;
+      }
+    }
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  secs.forEach(function (s) { io.observe(s); });
+})();
+</script>
+</body>
+</html>

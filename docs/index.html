@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>kiln</title>
+<meta name="description" content="A software factory you install into your repo. Skills for Claude Code, Codex and Cursor, plus a Go binary that answers with facts from git and gh.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* The inside of a kiln: each lifecycle stage keeps its incandescence color everywhere it appears. */
+:root {
+  --bg: #14100d; --bg-2: #1a1511; --surface: #201914; --surface-2: #2a211a;
+  --line: #3d3128; --line-soft: #2b231c;
+  --fg: #f4e9dd; --fg-2: #cdbdad; --muted: #9b8a7a;
+  --ember: #ff6b2b; --amber: #ffae42;
+  --glow: rgba(255, 107, 43, .14); --glow-2: rgba(255, 174, 66, .10);
+  --s-gather: #b48767; --s-shape: #e0503a; --s-fire: #ff6b2b; --s-glaze: #ffae42; --s-ship: #ffe1a1; --s-temper: #8fabbb;
+  --ok: #7ccb9c; --crit: #ff6a5c;
+  --term-bg: #0f0c0a; --term-fg: #f1e5d8; --term-dim: #8c7d70; --term-ok: #7ccb9c; --term-hot: #ffae42;
+  --font-display: "Big Shoulders Display", "Oswald", "Arial Narrow", Impact, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #ede5db; --bg-2: #e6ddd1; --surface: #f8f3ed; --surface-2: #efe7dd;
+    --line: #d4c6b6; --line-soft: #e0d5c8;
+    --fg: #23180f; --fg-2: #4c3b2e; --muted: #7b6757;
+    --ember: #c2410c; --amber: #a85b05;
+    --glow: rgba(194, 65, 12, .10); --glow-2: rgba(168, 91, 5, .08);
+    --s-gather: #8a5f43; --s-shape: #b3301c; --s-fire: #d4470e; --s-glaze: #b26a00; --s-ship: #8c6a12; --s-temper: #4a6b7d;
+    --ok: #2f7d50; --crit: #c0352a;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #ede5db; --bg-2: #e6ddd1; --surface: #f8f3ed; --surface-2: #efe7dd;
+  --line: #d4c6b6; --line-soft: #e0d5c8;
+  --fg: #23180f; --fg-2: #4c3b2e; --muted: #7b6757;
+  --ember: #c2410c; --amber: #a85b05;
+  --glow: rgba(194, 65, 12, .10); --glow-2: rgba(168, 91, 5, .08);
+  --s-gather: #8a5f43; --s-shape: #b3301c; --s-fire: #d4470e; --s-glaze: #b26a00; --s-ship: #8c6a12; --s-temper: #4a6b7d;
+  --ok: #2f7d50; --crit: #c0352a;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 15.5px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+a { color: var(--ember); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; border-radius: 4px; }
+code { font-family: var(--font-mono); font-size: .86em; background: var(--surface-2); border: 1px solid var(--line-soft); padding: .06em .36em; border-radius: 5px; white-space: nowrap; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+
+.wrap { max-width: 1120px; margin-inline: auto; padding-inline: 24px; }
+@media (max-width: 600px) { .wrap { padding-inline: 16px; } }
+
+/* header */
+.top { border-bottom: 1px solid var(--line-soft); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 56px; }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand b { font: 800 24px/1 var(--font-display); letter-spacing: .02em; }
+.brand span, .meta { font: 500 11px/1 var(--font-mono); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.top-right { display: flex; align-items: center; gap: 16px; }
+@media (max-width: 560px) { .top .meta { display: none; } }
+.theme-btn {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  background: var(--surface); color: var(--fg-2); border: 1px solid var(--line);
+  font: 500 12px/1 var(--font-mono); padding: 8px 11px; border-radius: 999px;
+}
+.theme-btn:hover { color: var(--fg); border-color: var(--muted); }
+.theme-btn i { width: 10px; height: 10px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 10px var(--ember); }
+
+/* hero */
+.hero { position: relative; overflow: hidden; padding-block: 52px 56px; }
+.hero::before {
+  content: ""; position: absolute; inset: -40% -10% auto 40%; height: 140%; pointer-events: none;
+  background: radial-gradient(closest-side, var(--glow), transparent 70%), radial-gradient(closest-side at 70% 60%, var(--glow-2), transparent 75%);
+}
+.hero .wrap { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .95fr); gap: 44px; align-items: center; }
+@media (max-width: 900px) { .hero .wrap { grid-template-columns: minmax(0, 1fr); gap: 32px; } }
+.wordmark {
+  font: 900 clamp(96px, 14vw, 168px)/.8 var(--font-display); letter-spacing: -.01em; margin: 0 0 14px;
+  color: var(--ember);
+  background: linear-gradient(100deg, var(--s-shape) 0%, var(--s-fire) 32%, var(--s-glaze) 64%, var(--s-ship) 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.tagline { font: 700 clamp(26px, 3vw, 34px)/1.1 var(--font-display); letter-spacing: .01em; max-width: 20ch; }
+.pitch { color: var(--fg-2); max-width: 52ch; margin-top: 16px; font-size: 16.5px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+.chip { font: 500 12px/1 var(--font-mono); color: var(--fg-2); border: 1px solid var(--line); background: var(--surface); padding: 7px 10px; border-radius: 999px; }
+.chip b { color: var(--ember); font-weight: 600; }
+
+.term {
+  background: var(--term-bg); color: var(--term-fg); border: 1px solid var(--line); border-radius: 12px;
+  font: 400 12.5px/1.7 var(--font-mono); padding: 14px 18px 16px; overflow-x: auto; white-space: pre; margin: 0;
+  box-shadow: 0 24px 60px -30px rgba(0, 0, 0, .55);
+}
+.term .d { color: var(--term-dim); }
+.term .k { color: var(--term-ok); }
+.term .h { color: var(--term-hot); }
+.term-bar { display: flex; gap: 6px; margin-bottom: 8px; }
+.term-bar i { width: 9px; height: 9px; border-radius: 50%; background: #3a2f27; }
+
+/* section scaffolding */
+section.block { padding-block: 56px; border-top: 1px solid var(--line-soft); }
+.eyebrow {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  font: 500 12px/1 var(--font-mono); text-transform: uppercase; letter-spacing: .16em; color: var(--ember);
+}
+.eyebrow::before { content: ""; width: 26px; height: 1px; background: currentColor; }
+h2 { font: 800 clamp(34px, 4.4vw, 50px)/.95 var(--font-display); letter-spacing: .005em; }
+.lede { color: var(--fg-2); max-width: 64ch; margin-top: 12px; }
+.head { margin-bottom: 30px; }
+
+/* lifecycle strip */
+.kiln-bar { position: relative; height: 6px; border-radius: 6px; margin: 6px 0 0;
+  background: linear-gradient(90deg, var(--s-gather) 0%, var(--s-shape) 22%, var(--s-fire) 40%, var(--s-glaze) 60%, var(--s-ship) 78%, var(--s-temper) 100%); }
+.gate-mark {
+  position: absolute; top: 50%; width: 18px; height: 18px; transform: translate(-50%, -50%) rotate(45deg);
+  background: var(--bg); border: 2px solid var(--amber); display: grid; place-items: center;
+}
+.gate-mark span { transform: rotate(-45deg); font: 600 9.5px/1 var(--font-mono); color: var(--amber); }
+.stages { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; margin-top: 18px; }
+.stage { padding: 4px 14px 0 0; border-left: 1px solid var(--line-soft); padding-left: 14px; }
+.stage:first-child { border-left: 0; padding-left: 0; }
+.stage .nm { font: 800 24px/1 var(--font-display); letter-spacing: .02em; color: var(--c); }
+.stage .tmp { font: 500 11px/1 var(--font-mono); color: var(--muted); margin-top: 6px; letter-spacing: .04em; }
+.stage p { font-size: 13.5px; color: var(--fg-2); margin-top: 10px; line-height: 1.5; }
+.stage .sk { font: 500 11px/1.6 var(--font-mono); color: var(--muted); margin-top: 8px; }
+@media (max-width: 900px) {
+  .kiln-bar { display: none; }
+  .stages { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 0; }
+  .stage:nth-child(odd) { border-left: 0; padding-left: 0; }
+  .stage { border-top: 3px solid var(--c); padding-top: 12px; }
+}
+@media (max-width: 480px) {
+  .stages { grid-template-columns: minmax(0, 1fr); }
+  .stage { border-left: 0; padding-left: 0; }
+}
+.loopnote { margin-top: 22px; font-size: 13.5px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 22px; }
+.loopnote span { display: inline-flex; align-items: center; gap: 8px; }
+.dia { width: 9px; height: 9px; transform: rotate(45deg); border: 1.5px solid var(--amber); display: inline-block; flex: none; }
+
+/* features */
+.features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 900px) { .features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .features { grid-template-columns: minmax(0, 1fr); } }
+.card {
+  position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 20px 20px 18px; min-width: 0; overflow: hidden;
+}
+.card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--c, var(--ember)); }
+.card .num { font: 600 11px/1 var(--font-mono); color: var(--c, var(--ember)); letter-spacing: .1em; }
+.card h3 { font: 700 23px/1.05 var(--font-display); letter-spacing: .01em; margin-top: 10px; }
+.card p { font-size: 14px; color: var(--fg-2); margin-top: 10px; }
+.card .proof { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); font: 500 11.5px/1.65 var(--font-mono); color: var(--muted); }
+.card .proof b { color: var(--fg); font-weight: 500; }
+.v-ok { color: var(--ok); } .v-no { color: var(--crit); } .v-mid { color: var(--amber); }
+
+/* autonomy */
+.auto { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.05fr); gap: 14px; }
+@media (max-width: 900px) { .auto { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .auto { grid-template-columns: minmax(0, 1fr); } }
+.mode { border: 1px solid var(--line); border-radius: 14px; padding: 18px; background: var(--bg-2); }
+.mode.on { border-color: var(--ember); background: linear-gradient(180deg, var(--glow), transparent 70%), var(--surface); }
+.mode h3 { font: 700 24px/1 var(--font-display); display: flex; align-items: baseline; gap: 10px; }
+.mode h3 small { font: 500 10.5px/1 var(--font-mono); color: var(--ember); letter-spacing: .1em; text-transform: uppercase; }
+.mode p { font-size: 13.5px; color: var(--fg-2); margin-top: 10px; }
+.mode .stops { margin-top: 12px; font: 500 11.5px/1.4 var(--font-mono); color: var(--amber); }
+.always { border: 1px solid var(--crit); border-radius: 14px; padding: 18px; background: color-mix(in srgb, var(--crit) 6%, var(--surface)); }
+.always h3 { font: 700 24px/1 var(--font-display); color: var(--crit); }
+.always ul { margin: 12px 0 0; padding: 0; list-style: none; font-size: 13.5px; color: var(--fg-2); }
+.always li { padding: 4px 0 4px 18px; position: relative; }
+.always li::before { content: ""; position: absolute; left: 2px; top: 11px; width: 7px; height: 7px; transform: rotate(45deg); border: 1.5px solid var(--crit); }
+.sizes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+@media (max-width: 700px) { .sizes { grid-template-columns: minmax(0, 1fr); } }
+.size { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; border: 1px solid var(--line-soft); border-radius: 12px; }
+.size b { font: 900 34px/.9 var(--font-display); color: var(--c); flex: none; width: 28px; }
+.size div { font-size: 13.5px; color: var(--fg-2); }
+.size div strong { display: block; color: var(--fg); font-weight: 600; font-size: 14px; }
+
+/* commands */
+.cmds { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 800px) { .cmds { grid-template-columns: minmax(0, 1fr); } }
+.cmd-col h3 { font: 700 22px/1 var(--font-display); margin-bottom: 4px; }
+.cmd-col .sub { font-size: 13.5px; color: var(--muted); margin-bottom: 12px; }
+.cmd-list { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--surface); }
+.cmd-row { display: grid; grid-template-columns: minmax(0, 13.5em) minmax(0, 1fr); gap: 14px; padding: 11px 16px; border-top: 1px solid var(--line-soft); align-items: baseline; }
+.cmd-row:first-child { border-top: 0; }
+.cmd-row code { background: none; border: 0; padding: 0; color: var(--ember); font-size: 12.5px; white-space: normal; }
+.cmd-row span { font-size: 13.5px; color: var(--fg-2); }
+@media (max-width: 480px) { .cmd-row { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+
+/* footer */
+footer { border-top: 1px solid var(--line-soft); padding-block: 26px 40px; }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; font: 500 12px/1.5 var(--font-mono); color: var(--muted); }
+footer a { color: var(--fg-2); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .ember { animation: pulse 2.8s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .55; } }
+}
+
+@media print {
+  .theme-btn { display: none; }
+  body { font-size: 12.5px; }
+  .hero { padding-block: 20px; }
+  section.block { padding-block: 22px; break-inside: avoid; }
+  .card, .mode, .always, .cmd-list { break-inside: avoid; }
+  .term { box-shadow: none; }
+}
+
+/* ── site shell: shared header and footer ───────────────────── */
+.top { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line-soft); }
+.top .wrap { display: flex; align-items: center; justify-content: flex-start; gap: 14px; height: 58px; }
+.brand { display: flex; align-items: baseline; text-decoration: none; color: var(--fg); flex: none; }
+.brand b { font: 800 26px/1 var(--font-display); letter-spacing: .02em; background: linear-gradient(100deg, var(--s-shape), var(--ember) 45%, var(--amber)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+nav.site { display: flex; gap: 2px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+nav.site::-webkit-scrollbar { display: none; }
+nav.site a { flex: none; font: 500 12px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-decoration: none; padding: 9px 10px; border-radius: 7px; }
+nav.site a:hover { color: var(--fg); background: var(--surface-2); }
+nav.site a[aria-current="page"] { color: var(--ember); background: var(--glow); }
+nav.site a:focus-visible, .theme-btn:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.theme-btn { flex: none; display: inline-flex; align-items: center; gap: 8px; background: var(--surface); color: var(--fg-2); border: 1px solid var(--line); font: 500 12px/1 var(--font-mono); padding: 8px 11px; border-radius: 999px; cursor: pointer; }
+.theme-btn:hover { color: var(--fg); border-color: var(--muted); }
+.theme-btn i { width: 10px; height: 10px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 10px var(--ember); }
+@media (max-width: 520px) { .theme-btn span { display: none; } .theme-btn { padding: 8px; } }
+footer.site-foot { border-top: 1px solid var(--line-soft); padding-block: 28px 40px; margin-top: 0; }
+footer.site-foot .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; font: 500 12px/1.6 var(--font-mono); color: var(--muted); }
+footer.site-foot b { color: var(--ember); font-weight: 600; }
+footer.site-foot a { color: var(--fg-2); }
+footer.site-foot code { font: inherit; color: var(--fg-2); background: none; border: 0; padding: 0; }
+
+/* ── landing extras ─────────────────────── */
+.cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; align-items: center; }
+.btn { display: inline-flex; align-items: center; gap: 8px; font: 600 14px/1 var(--font-body); text-decoration: none; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--line); color: var(--fg); background: var(--surface); }
+.btn:hover { border-color: var(--muted); }
+.btn.hot { background: var(--ember); border-color: var(--ember); color: #1a0f08; }
+.btn.hot:hover { filter: brightness(1.08); }
+.install { display: flex; align-items: center; gap: 10px; margin-top: 14px; max-width: 100%; font: 500 13px/1 var(--font-mono); color: var(--fg-2); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 6px 6px 14px; width: fit-content; }
+.install code { background: none; border: 0; padding: 0; color: var(--fg); white-space: nowrap; overflow-x: auto; min-width: 0; }
+.install .d { color: var(--muted); }
+.install button { flex: none; font: 500 11px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--fg-2); background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; cursor: pointer; }
+.install button:hover { color: var(--fg); }
+.more { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 22px; font: 500 13px/1.5 var(--font-body); }
+.more a { color: var(--ember); text-decoration: none; }
+.more a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><b>kiln</b></a>
+    <nav class="site" aria-label="Docs">
+      <a href="getting-started.html">Get started</a>
+      <a href="tutorial.html">Tutorial</a>
+      <a href="concepts.html">Concepts</a>
+      <a href="skills.html">Skills</a>
+      <a href="cli.html">CLI</a>
+      <a href="https://github.com/pavelsimo/kiln">GitHub</a>
+    </nav>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle color theme"><i aria-hidden="true"></i><span id="themeLbl">Light</span></button>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <h1 class="wordmark">kiln</h1>
+        <p class="tagline">A software factory you install into your repo.</p>
+        <p class="pitch">Hand kiln a task. It opens the issue, plans it, builds it in its own worktree, proves it works, ships the pull request, and writes down what it learned so the next task starts warmer. Plain skills, <code>gh</code> and <code>git</code>, and memory you can read in a diff.</p>
+        <div class="chips">
+          <span class="chip"><b>1</b> Go binary</span>
+          <span class="chip"><b>21</b> skills, <b>1</b> router</span>
+          <span class="chip"><b>6</b> playbooks</span>
+          <span class="chip">Claude Code · Codex · Cursor</span>
+        </div>
+        <div class="cta">
+          <a class="btn hot" href="getting-started.html">Get started</a>
+          <a class="btn" href="tutorial.html">Take the tour</a>
+        </div>
+        <div class="install"><code><span class="d">$</span> brew install pavelsimo/tap/kiln</code><button type="button" data-copy="brew install pavelsimo/tap/kiln">Copy</button></div>
+      </div>
+      <pre class="term" aria-label="Example terminal session"><div class="term-bar" aria-hidden="true"><i></i><i></i><i></i></div><span class="d">$</span> kiln init
+  <span class="k">✓</span> git repo · gh authenticated as you
+  <span class="k">✓</span> .kiln/ written · 21 skills · config.yaml · kiln.lock
+  <span class="k">✓</span> linked → .claude/skills  .agents/skills  .cursor/skills
+  <span class="k">✓</span> 14 labels · issue + PR templates · ci.yml
+
+<span class="d">›</span> /kiln "add a dark mode toggle to settings"
+  <span class="d">feature · size M · autonomy gated</span>
+  <span class="k">✓</span> #42 opened · plan posted
+  <span class="h">◆ gate 1</span> plan for #42 is waiting for you
+  <span class="d">…</span>
+  <span class="k">✓</span> 4/4 predicates VERIFIED on a1c9e0f
+  <span class="k">✓</span> PR #57 · CI green · review PASS
+  <span class="h">◆ gate 2</span> merge #57? <span class="ember">▍</span></pre>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <div class="head">
+        <div class="eyebrow">The loop</div>
+        <h2>Six stages, two gates</h2>
+        <p class="lede">Every task moves through the same firing. The <code>/kiln</code> router sizes it, picks a playbook, and copies the steps into the agent's todo list, so nothing gets skipped silently.</p>
+      </div>
+      <div class="kiln-bar" aria-hidden="true">
+        <div class="gate-mark" style="left:33.3%"><span>1</span></div>
+        <div class="gate-mark" style="left:75%"><span>2</span></div>
+      </div>
+      <div class="stages">
+        <div class="stage" style="--c:var(--s-gather)">
+          <div class="nm">Gather</div><div class="tmp">20°C · intake</div>
+          <p>A sentence becomes an issue with acceptance criteria and type and size labels.</p>
+          <div class="sk">kiln-issue · triage</div>
+        </div>
+        <div class="stage" style="--c:var(--s-shape)">
+          <div class="nm">Shape</div><div class="tmp">573°C · plan</div>
+          <p>Reads memory, maps the code, posts a plan on the issue.</p>
+          <div class="sk">recall · explore · plan</div>
+        </div>
+        <div class="stage" style="--c:var(--s-fire)">
+          <div class="nm">Fire</div><div class="tmp">1060°C · build</div>
+          <p>Own worktree and branch. Test-first, small gitmoji commits.</p>
+          <div class="sk">start · build · commit</div>
+        </div>
+        <div class="stage" style="--c:var(--s-glaze)">
+          <div class="nm">Glaze</div><div class="tmp">1222°C · verify</div>
+          <p>Each criterion proven on the real surface, then reviewed by size.</p>
+          <div class="sk">verify · review</div>
+        </div>
+        <div class="stage" style="--c:var(--s-ship)">
+          <div class="nm">Ship</div><div class="tmp">soak · PR + merge</div>
+          <p>Ready PR taken to green, squash merged, state read back.</p>
+          <div class="sk">pr · watch · merge</div>
+        </div>
+        <div class="stage" style="--c:var(--s-temper)">
+          <div class="nm">Temper</div><div class="tmp">slow cool · learn</div>
+          <p>Journal rows, then a retro turns friction into lessons.</p>
+          <div class="sk">log · retro</div>
+        </div>
+      </div>
+      <div class="loopnote">
+        <span><i class="dia"></i>Gate 1 stops before any code is written</span>
+        <span><i class="dia"></i>Gate 2 stops before the squash merge</span>
+        <span>Failed review goes back to Fire. Lessons go back to the start.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <div class="head">
+        <div class="eyebrow">What you get</div>
+        <h2>The features that matter</h2>
+      </div>
+      <div class="features">
+        <article class="card" style="--c:var(--s-gather)">
+          <div class="num">ISSUE-FIRST</div>
+          <h3>The issue is the unit of work</h3>
+          <p>No code before a GitHub issue with observable acceptance criteria. One issue, one branch, one worktree, one PR that says <code>Closes #N</code>.</p>
+          <div class="proof"><b>kiln:*</b> labels are the state machine. Anyone can see where a task is on GitHub.</div>
+        </article>
+        <article class="card" style="--c:var(--s-shape)">
+          <div class="num">ONE DOOR IN</div>
+          <h3>A router and six playbooks</h3>
+          <p><code>/kiln</code> restates the goal, sizes it, and picks feature, bug, refactor, chore, investigate or release. Each action skill also works on its own.</p>
+          <div class="proof">☒ <b>skip: kiln-plan</b> · chore with no design decision</div>
+        </article>
+        <article class="card" style="--c:var(--s-glaze)">
+          <div class="num">VERIFICATION</div>
+          <h3>Proven on the real surface</h3>
+          <p>Each criterion is a predicate checked on the running app, the real command, or a value read back. A green build is not proof. Tests are audited before they count.</p>
+          <div class="proof"><span class="v-ok">VERIFIED</span> · <span class="v-no">NOT VERIFIED</span> · <span class="v-mid">INCONCLUSIVE</span><br>“couldn't check” is never a pass</div>
+        </article>
+        <article class="card" style="--c:var(--s-temper)">
+          <div class="num">MEMORY</div>
+          <h3>Memory you can read in a diff</h3>
+          <p>Project facts, task journals, decisions and lessons live in <code>.kiln/memory/</code>, committed with the work. One writer per file, so parallel tasks never conflict.</p>
+          <div class="proof">lessons graduate: <b>candidate → recurring → strong</b> → standing check</div>
+        </article>
+        <article class="card" style="--c:var(--s-fire)">
+          <div class="num">CODE OR AGENT</div>
+          <h3>Facts in code, judgment in skills</h3>
+          <p>If <code>git</code> or <code>gh</code> can answer it exactly, the kiln binary does, with no model involved. Skills keep the work that needs reading code or making a call.</p>
+          <div class="proof"><b>kiln merge</b> refuses red CI or a stale verdict, whatever the agent believes</div>
+        </article>
+        <article class="card" style="--c:var(--s-ship)">
+          <div class="num">FACTORY FLOOR</div>
+          <h3>Several firings at once</h3>
+          <p>Each issue gets its own git worktree beside the repo, so up to three tasks build in parallel. <code>kiln status</code> shows what's in flight and what's waiting on you.</p>
+          <div class="proof">#42 glaze <span class="v-mid">● CI 4/6</span> · #43 ship <span class="v-ok">✓ ◆2 you</span></div>
+        </article>
+        <article class="card" style="--c:var(--s-glaze)">
+          <div class="num">RELEASES</div>
+          <h3>Many firings, one tag</h3>
+          <p><code>kiln-release</code> infers the version from gitmoji squash commits, writes <code>CHANGELOG.md</code> once through a release PR, tags the merge commit, and publishes.</p>
+          <div class="proof">✨ feat → minor · 🐛 fix → patch · 💥 → major</div>
+        </article>
+        <article class="card" style="--c:var(--s-shape)">
+          <div class="num">HOUSE STYLE</div>
+          <h3>Conventions built in</h3>
+          <p>Gitmoji plus Conventional Commits, <code>kiln/42-dark-mode</code> branches, ready PRs (never drafts), squash merges, and a PR template with a verification section.</p>
+          <div class="proof"><b>✨ feat: add dark mode to settings (#42)</b></div>
+        </article>
+        <article class="card" style="--c:var(--s-gather)">
+          <div class="num">AGENT-AGNOSTIC</div>
+          <h3>One source, every agent</h3>
+          <p>Skills live in <code>.kiln/skills/</code> and are symlinked into Claude Code, Codex and Cursor. Edit a skill once and it changes everywhere. Standalone, no runtime dependencies.</p>
+          <div class="proof"><b>kiln update</b> keeps your edits, writes the new version as .kiln-new</div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <div class="head">
+        <div class="eyebrow">Autonomy × rigor</div>
+        <h2>Autonomy is a setting. Safety is not.</h2>
+        <p class="lede">One setting decides how often kiln stops for you. The task's size decides how hard it checks its own work.</p>
+      </div>
+      <div class="auto">
+        <div class="mode">
+          <h3>manual</h3>
+          <p>Runs one skill, reports, suggests the next step. Good while you're building trust.</p>
+          <div class="stops">stops after every step</div>
+        </div>
+        <div class="mode on">
+          <h3>gated <small>default</small></h3>
+          <p>Runs the whole playbook and waits only at the two gates.</p>
+          <div class="stops">◆1 plan · ◆2 merge</div>
+        </div>
+        <div class="mode">
+          <h3>autopilot</h3>
+          <p>Task to merged PR while <code>kiln ready</code> passes. INCONCLUSIVE never merges on its own.</p>
+          <div class="stops">◆1 for size L · hard stops</div>
+        </div>
+        <div class="always">
+          <h3>Always stops</h3>
+          <ul>
+            <li>force-push to a shared branch</li>
+            <li>delete unmerged work or data</li>
+            <li>deploy, release, or tag</li>
+            <li>merge with failing checks</li>
+          </ul>
+        </div>
+      </div>
+      <div class="sizes">
+        <div class="size" style="--c:var(--s-ship)"><b>S</b><div><strong>Self-verify, self-review</strong>One area, about 100 lines. Running it is enough.</div></div>
+        <div class="size" style="--c:var(--s-glaze)"><b>M</b><div><strong>Fresh checker, independent reviewer</strong>UI and API changes must be seen in the running app.</div></div>
+        <div class="size" style="--c:var(--s-shape)"><b>L</b><div><strong>Verifier swarm, adversarial review</strong>Split into sub-issues. The plan always needs a human.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <div class="head">
+        <div class="eyebrow">Get started</div>
+        <h2><code style="font:inherit;background:none;border:0;padding:0;color:var(--ember)">kiln init</code>, then fire</h2>
+      </div>
+      <div class="cmds">
+        <div class="cmd-col">
+          <h3>The binary</h3>
+          <p class="sub">Exact answers over git and gh. Same input, same output, <code>--json</code> everywhere.</p>
+          <div class="cmd-list">
+            <div class="cmd-row"><code>kiln init</code><span>Skills, config, symlinks, labels, templates and CI. Safe to re-run.</span></div>
+            <div class="cmd-row"><code>kiln update · doctor</code><span>Upgrade skills without losing your edits; check the setup is healthy.</span></div>
+            <div class="cmd-row"><code>kiln status · checks · verdict</code><span>What's in flight, which checks apply, whether a verdict is still fresh.</span></div>
+            <div class="cmd-row"><code>kiln ready · release plan</code><span>Can this PR merge now? What version comes next?</span></div>
+            <div class="cmd-row"><code>kiln move · merge</code><span>The two guarded writes. Only legal label moves, only merges that pass.</span></div>
+          </div>
+        </div>
+        <div class="cmd-col">
+          <h3>In your agent</h3>
+          <p class="sub">Skills that need judgment: reading code, running the app, deciding what's good enough.</p>
+          <div class="cmd-list">
+            <div class="cmd-row"><code>/kiln-onboard</code><span>Writes <code>PROJECT.md</code> and builds the app driver for verification.</span></div>
+            <div class="cmd-row"><code>/kiln "&lt;task&gt;"</code><span>One door in. Issue to merged PR, following the playbook.</span></div>
+            <div class="cmd-row"><code>/kiln-status</code><span>The factory floor, plus what to do next.</span></div>
+            <div class="cmd-row"><code>/kiln-retro</code><span>Turns recurring friction into lessons and skill edits, in one PR.</span></div>
+            <div class="cmd-row"><code>/kiln-release</code><span>Version, changelog, release PR, tag and publish.</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="more">
+        <a href="getting-started.html">Install and first task →</a>
+        <a href="tutorial.html">A first week with kiln →</a>
+        <a href="concepts.html">How kiln works →</a>
+        <a href="skills.html">All 21 skills →</a>
+        <a href="cli.html">CLI reference →</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot"><div class="wrap">
+  <span><b>kiln</b> · MIT licensed · <a href="https://github.com/pavelsimo/kiln">github.com/pavelsimo/kiln</a></span>
+  <span>Fire it up: <code>kiln init</code></span>
+</div></footer>
+
+<script>
+(function () {
+  var root = document.documentElement, btn = document.getElementById('themeBtn'), lbl = document.getElementById('themeLbl');
+  function effective() {
+    var t = root.getAttribute('data-theme');
+    if (t) return t;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  function sync() { lbl.textContent = effective() === 'dark' ? 'Light' : 'Dark'; }
+  try { var saved = localStorage.getItem('kiln-theme'); if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved); } catch (e) {}
+  sync();
+  btn.addEventListener('click', function () {
+    var next = effective() === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('kiln-theme', next); } catch (e) {}
+    sync();
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-copy]'), function (b) {
+    b.addEventListener('click', function () {
+      var text = b.getAttribute('data-copy');
+      function done() { var old = b.textContent; b.textContent = 'Copied'; setTimeout(function () { b.textContent = old; }, 1400); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () {});
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

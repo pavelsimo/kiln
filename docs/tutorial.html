@@ -1,0 +1,1454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kiln Tutorial</title>
+<meta name="description" content="A friendly walk through your first week with kiln: install it, ship a feature, fix a bug, run tasks in parallel and cut a release.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* kiln docs palette and type, set for long-form reading: one prose column, a chapter rail on the side. */
+:root {
+  --bg: #14100d;
+  --bg-2: #1a1511;
+  --surface: #201914;
+  --surface-2: #2a211a;
+  --line: #3d3128;
+  --line-soft: #2b231c;
+  --fg: #f4e9dd;
+  --fg-2: #cdbdad;
+  --muted: #9b8a7a;
+  --ember: #ff6b2b;
+  --amber: #ffae42;
+  --glow: rgba(255, 107, 43, .14);
+  --glow-2: rgba(255, 174, 66, .10);
+  --s-gather: #b48767;
+  --s-shape: #e0503a;
+  --s-fire: #ff6b2b;
+  --s-glaze: #ffae42;
+  --s-ship: #ffe1a1;
+  --s-temper: #8fabbb;
+  --ok: #7ccb9c;
+  --crit: #ff6a5c;
+  --term-bg: #0f0c0a;
+  --term-fg: #f1e5d8;
+  --term-dim: #8c7d70;
+  --term-ok: #7ccb9c;
+  --term-hot: #ffae42;
+  --term-ember: #ff7a3d;
+  --font-display: "Big Shoulders Display", "Oswald", "Arial Narrow", Impact, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #ede5db; --bg-2: #e6ddd1; --surface: #f8f3ed; --surface-2: #efe7dd;
+    --line: #d4c6b6; --line-soft: #e0d5c8;
+    --fg: #23180f; --fg-2: #4c3b2e; --muted: #7b6757;
+    --ember: #c2410c; --amber: #a85b05;
+    --glow: rgba(194, 65, 12, .10); --glow-2: rgba(168, 91, 5, .08);
+    --s-gather: #8a5f43; --s-shape: #b3301c; --s-fire: #d4470e; --s-glaze: #b26a00; --s-ship: #8c6a12; --s-temper: #4a6b7d;
+    --ok: #2f7d50; --crit: #c0352a;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #ede5db; --bg-2: #e6ddd1; --surface: #f8f3ed; --surface-2: #efe7dd;
+  --line: #d4c6b6; --line-soft: #e0d5c8;
+  --fg: #23180f; --fg-2: #4c3b2e; --muted: #7b6757;
+  --ember: #c2410c; --amber: #a85b05;
+  --glow: rgba(194, 65, 12, .10); --glow-2: rgba(168, 91, 5, .08);
+  --s-gather: #8a5f43; --s-shape: #b3301c; --s-fire: #d4470e; --s-glaze: #b26a00; --s-ship: #8c6a12; --s-temper: #4a6b7d;
+  --ok: #2f7d50; --crit: #c0352a;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 84px; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 17px/1.7 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+[hidden] { display: none !important; }
+a { color: var(--ember); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; border-radius: 4px; }
+code, kbd { font-family: var(--font-mono); font-size: .86em; }
+p code, li code, td code, dd code, h3 code, summary code {
+  background: var(--surface-2); border: 1px solid var(--line-soft);
+  padding: .06em .36em; border-radius: 5px; color: var(--fg);
+}
+strong { font-weight: 600; color: var(--fg); }
+
+.wrap { max-width: 1120px; margin-inline: auto; padding-inline: 24px; }
+@media (max-width: 600px) { .wrap { padding-inline: 16px; } body { font-size: 16.5px; } }
+
+
+/* ── header (shared site header) ────────── */
+.top { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line-soft); }
+.top .wrap { display: flex; align-items: center; gap: 14px; height: 58px; }
+.brand { display: flex; align-items: baseline; text-decoration: none; color: var(--fg); flex: none; }
+.brand b { font: 800 26px/1 var(--font-display); letter-spacing: .02em; background: linear-gradient(100deg, var(--s-shape), var(--ember) 45%, var(--amber)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+nav.site { display: flex; gap: 2px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+nav.site::-webkit-scrollbar { display: none; }
+nav.site a { flex: none; font: 500 12px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-decoration: none; padding: 9px 10px; border-radius: 7px; }
+nav.site a:hover { color: var(--fg); background: var(--surface-2); }
+nav.site a[aria-current="page"] { color: var(--ember); background: var(--glow); }
+.theme-btn {
+  flex: none; display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface); color: var(--fg-2); border: 1px solid var(--line);
+  font: 500 12px/1 var(--font-mono); padding: 8px 11px; border-radius: 999px; cursor: pointer;
+}
+.theme-btn:hover { color: var(--fg); border-color: var(--muted); }
+.theme-btn i { width: 10px; height: 10px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 10px var(--ember); }
+.progress { position: absolute; left: 0; bottom: -1px; height: 2px; width: 0; background: linear-gradient(90deg, var(--s-shape), var(--s-fire), var(--s-glaze)); }
+
+/* ── hero ───────────────────────────────── */
+.hero { position: relative; overflow: hidden; padding-block: 72px 76px; border-bottom: 1px solid var(--line-soft); }
+.hero::before {
+  content: ""; position: absolute; inset: -40% -10% auto 40%; height: 140%;
+  background:
+    radial-gradient(closest-side, var(--glow), transparent 70%),
+    radial-gradient(closest-side at 70% 60%, var(--glow-2), transparent 75%);
+  pointer-events: none;
+}
+.hero .wrap { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); gap: 44px; align-items: center; }
+.hero .term { font-size: 12.5px; }
+@media (max-width: 920px) { .hero .wrap { grid-template-columns: minmax(0, 1fr); gap: 36px; } .hero { padding-block: 48px 56px; } }
+.eyebrow {
+  display: flex; align-items: center; gap: 10px;
+  font: 500 12px/1.3 var(--font-mono); text-transform: uppercase; letter-spacing: .16em; color: var(--ember);
+  margin-bottom: 16px;
+}
+.eyebrow::before { content: ""; width: 26px; height: 1px; background: currentColor; flex: none; }
+.hero h1 {
+  margin: 0; font: 900 clamp(56px, 8.4vw, 104px)/.88 var(--font-display); letter-spacing: -.005em; text-wrap: balance;
+}
+.hero h1 em {
+  font-style: normal;
+  background: linear-gradient(100deg, var(--s-shape) 0%, var(--s-fire) 35%, var(--s-glaze) 75%, var(--s-ship) 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero .lede { font-size: 19px; color: var(--fg-2); max-width: 54ch; margin: 22px 0 0; }
+.needs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+.needs span {
+  font: 500 12.5px/1 var(--font-mono); color: var(--fg-2);
+  border: 1px solid var(--line); background: var(--surface); padding: 8px 11px; border-radius: 999px;
+}
+.needs span b { color: var(--ok); font-weight: 600; margin-right: 6px; }
+.note {
+  margin-top: 26px; font-size: 14.5px; color: var(--muted); max-width: 56ch;
+  border-left: 2px solid var(--line); padding-left: 14px;
+}
+
+/* ── page grid: rail + reading column ───── */
+.page { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 64px; padding-block: 24px 40px; }
+.rail { position: sticky; top: 84px; align-self: start; max-height: calc(100vh - 100px); overflow-y: auto; padding-block: 40px 20px; scrollbar-width: thin; }
+.rail h4 { margin: 0 0 12px; font: 500 11px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.rail ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.rail a {
+  display: grid; grid-template-columns: 26px 1fr; align-items: baseline;
+  color: var(--muted); text-decoration: none; font-size: 14px; line-height: 1.35;
+  padding: 6px 10px 6px 8px; border-radius: 8px; border-left: 2px solid transparent;
+}
+.rail a span { font: 500 11px/1 var(--font-mono); color: var(--muted); opacity: .8; }
+.rail a:hover { color: var(--fg); background: var(--surface); }
+.rail a.on { color: var(--fg); background: var(--surface); border-left-color: var(--ember); }
+.rail a.on span { color: var(--ember); opacity: 1; }
+main { min-width: 0; max-width: 740px; }
+
+@media (max-width: 960px) {
+  .page { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 0; }
+  .rail {
+    top: 58px; z-index: 19; max-height: none; overflow: visible; padding: 0;
+    margin-inline: -24px; background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .rail h4 { display: none; }
+  .rail ol {
+    display: flex; gap: 4px; overflow-x: auto; padding: 8px 24px; scrollbar-width: none;
+    mask-image: linear-gradient(90deg, #000 90%, transparent);
+  }
+  .rail ol::-webkit-scrollbar { display: none; }
+  .rail a { display: flex; gap: 6px; white-space: nowrap; font-size: 13px; padding: 7px 10px; border-left: 0; border-bottom: 2px solid transparent; border-radius: 8px; }
+  .rail a.on { border-bottom-color: var(--ember); }
+  html { scroll-padding-top: 116px; }
+}
+@media (max-width: 600px) { .rail { margin-inline: -16px; } .rail ol { padding-inline: 16px; } }
+
+/* ── chapters ───────────────────────────── */
+.chapter { padding-block: 64px 20px; }
+.chapter + .chapter { border-top: 1px solid var(--line-soft); }
+.chapter h2 { margin: 0; font: 800 clamp(40px, 5.6vw, 60px)/.95 var(--font-display); letter-spacing: .005em; text-wrap: balance; }
+.chapter h3 { margin: 44px 0 0; font: 700 27px/1.1 var(--font-display); letter-spacing: .01em; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.chapter h3 .tag { font: 500 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.chapter p { margin: 16px 0 0; color: var(--fg-2); }
+.chapter p.lead { font-size: 19px; color: var(--fg); margin-top: 20px; }
+.chapter ul.plain { margin: 16px 0 0; padding-left: 20px; color: var(--fg-2); }
+.chapter ul.plain li { margin-top: 6px; }
+.chapter ul.plain li::marker { color: var(--ember); }
+.c-gather { color: var(--s-gather); } .c-shape { color: var(--s-shape); } .c-fire { color: var(--s-fire); }
+.c-glaze { color: var(--s-glaze); } .c-ship { color: var(--s-ship); } .c-temper { color: var(--s-temper); } .c-any { color: var(--muted); }
+:root[data-theme="light"] .c-ship { color: var(--s-ship); }
+
+/* ── terminal ───────────────────────────── */
+figure { margin: 22px 0 0; }
+.term {
+  background: var(--term-bg); color: var(--term-fg);
+  border: 1px solid var(--line); border-radius: 12px;
+  font: 400 13px/1.7 var(--font-mono); padding: 14px 18px 16px;
+  overflow-x: auto; white-space: pre; margin: 0; tab-size: 2;
+}
+.term .d { color: var(--term-dim); }
+.term .k { color: var(--term-ok); }
+.term .h { color: var(--term-hot); }
+.term .e { color: var(--term-ember); }
+.term .p { color: var(--term-ember); font-weight: 600; }
+.term-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; white-space: normal; }
+.term-bar i { width: 9px; height: 9px; border-radius: 50%; background: #3a2f27; }
+.term-bar span { margin-left: 8px; font-size: 11px; color: var(--term-dim); letter-spacing: .06em; }
+figcaption { margin-top: 10px; font-size: 13.5px; color: var(--muted); }
+
+/* ── chat (gate conversations) ──────────── */
+.chat { margin-top: 22px; display: grid; gap: 10px; }
+.msg { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; align-items: start; }
+.msg > b {
+  font: 600 11px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+  padding-top: 15px; text-align: right; color: var(--muted);
+}
+.msg.kiln > b { color: var(--ember); }
+.bubble {
+  min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 11px 15px; font: 400 14px/1.65 var(--font-mono); color: var(--fg-2); overflow-x: auto;
+}
+.bubble p { margin: 0; color: inherit; }
+.bubble p + p { margin-top: 6px; }
+.msg.you .bubble { background: var(--surface-2); color: var(--fg); font-family: var(--font-body); font-size: 15px; }
+.msg.gate .bubble { border-color: var(--amber); box-shadow: 0 0 0 4px var(--glow-2); }
+.bubble .g { color: var(--amber); font-weight: 600; }
+.bubble .k { color: var(--ok); }
+.bubble .dim { color: var(--muted); }
+@media (max-width: 520px) { .msg { grid-template-columns: minmax(0, 1fr); gap: 4px; } .msg > b { text-align: left; padding: 0 0 0 2px; } }
+
+/* ── callouts ───────────────────────────── */
+.callout {
+  margin-top: 24px; padding: 14px 18px; border-radius: 12px;
+  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--amber);
+  font-size: 15.5px; color: var(--fg-2);
+}
+.callout > b { display: block; font: 600 11px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--amber); margin-bottom: 8px; }
+.callout p { margin: 0; font-size: inherit; }
+.callout p + p { margin-top: 8px; }
+.callout.heads { border-left-color: var(--ember); }
+.callout.heads > b { color: var(--ember); }
+.why { margin-top: 30px; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+.why::before { content: ""; width: 18px; height: 1px; background: var(--line); }
+.why a { color: var(--fg-2); }
+.why a:hover { color: var(--ember); }
+
+/* ── stage strip ────────────────────────── */
+.strip { margin-top: 24px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.strip > div { min-width: 0; }
+.strip i { display: block; height: 6px; border-radius: 3px; background: currentColor; opacity: .22; transition: opacity .3s; }
+.strip span { display: block; margin-top: 7px; font: 500 11px/1.2 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.strip .done i { opacity: .55; }
+.strip .on i { opacity: 1; box-shadow: 0 0 12px currentColor; }
+.strip .on span { color: currentColor; font-weight: 600; }
+.strip.big { gap: 8px; }
+.strip.big i { height: 10px; border-radius: 5px; opacity: 1; }
+.strip.big span { color: currentColor; font-size: 12px; }
+.strip.big small { display: block; margin-top: 4px; font: 400 13px/1.35 var(--font-body); color: var(--fg-2); text-transform: none; letter-spacing: 0; white-space: normal; }
+@media (max-width: 640px) {
+  .strip.big { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .strip.big > div { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 4px 12px; }
+  .strip.big i { height: auto; grid-row: span 2; }
+  .strip.big span { margin-top: 0; }
+  .strip.big small { margin-top: 0; }
+}
+.gates { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 10px 22px; font: 500 13px/1.3 var(--font-mono); color: var(--fg-2); }
+.gates span { display: inline-flex; align-items: center; gap: 8px; }
+.dia { width: 10px; height: 10px; transform: rotate(45deg); border: 1.5px solid var(--amber); background: var(--surface); display: inline-block; flex: none; }
+
+/* ── issue / file cards ─────────────────── */
+.card {
+  margin-top: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+}
+.card-head {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 16px; border-bottom: 1px solid var(--line-soft); background: var(--bg-2);
+  font: 500 12.5px/1.3 var(--font-mono); color: var(--muted);
+}
+.card-head b { color: var(--fg); font: 600 15px/1.3 var(--font-body); }
+.card-body { padding: 14px 18px 16px; font-size: 15px; color: var(--fg-2); }
+.card-body h5 { margin: 14px 0 4px; font: 600 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.card-body h5:first-child { margin-top: 0; }
+.card-body p { margin: 0; font-size: 15px; }
+.card-body ul { margin: 0; padding-left: 0; list-style: none; }
+.card-body li { padding-left: 24px; position: relative; margin-top: 3px; }
+.card-body li::before { content: ""; position: absolute; left: 2px; top: .45em; width: 12px; height: 12px; border: 1.5px solid var(--line); border-radius: 3px; }
+.card-body li.x::before { background: var(--ok); border-color: var(--ok); }
+.card pre { margin: 0; padding: 14px 18px 16px; font: 400 13px/1.65 var(--font-mono); color: var(--fg-2); overflow-x: auto; white-space: pre; }
+.card pre .h { color: var(--amber); }
+.card pre .d { color: var(--muted); }
+.card pre .k { color: var(--ok); }
+.card pre .r { color: var(--crit); }
+
+/* ── label pills ────────────────────────── */
+.pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 500 12px/1 var(--font-mono); color: var(--fg-2);
+  padding: 5px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2);
+}
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.pill.kl::before { background: var(--ember); }
+.pill.ty::before { background: var(--s-temper); }
+.pill.sz::before { background: var(--s-glaze); }
+.pill.bl::before { background: var(--crit); }
+.flow { margin-top: 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.flow .arr { color: var(--muted); font: 400 14px/1 var(--font-mono); }
+.flow .pill.done { border-style: dashed; }
+
+/* ── two-column split ───────────────────── */
+.split { margin-top: 22px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 640px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; min-width: 0; }
+.box h4 { margin: 0; font: 700 21px/1.1 var(--font-display); letter-spacing: .01em; }
+.box h4 small { display: block; margin-top: 4px; font: 500 11px/1.2 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.box p { margin: 10px 0 0; font-size: 15px; }
+.box ul { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 7px; }
+.box li { font-size: 14.5px; color: var(--fg-2); display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); gap: 2px 10px; }
+.box li code { font-size: 12.5px; overflow-wrap: anywhere; }
+
+/* ── autonomy cards ─────────────────────── */
+.modes { margin-top: 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .modes { grid-template-columns: minmax(0, 1fr); } }
+.mode { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px 18px; min-width: 0; display: flex; flex-direction: column; }
+.mode.def { border-color: var(--ember); box-shadow: 0 0 0 4px var(--glow); }
+.mode h4 { margin: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font: 700 24px/1 var(--font-display); }
+.mode h4 small { font: 500 10.5px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ember); }
+.mode p { margin: 10px 0 0; font-size: 14.5px; flex: 1; }
+.mode .stops { margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--line); font: 500 12px/1.4 var(--font-mono); color: var(--amber); }
+.mode .who { display: block; margin-top: 8px; font-size: 13px; color: var(--muted); font-family: var(--font-body); }
+.hard { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+.hard span { font: 500 12.5px/1 var(--font-mono); color: var(--fg-2); padding: 7px 10px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--crit) 45%, var(--line)); background: color-mix(in srgb, var(--crit) 7%, var(--surface)); }
+
+/* ── worktree diagram ───────────────────── */
+.floor { margin-top: 22px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 14px; align-items: stretch; }
+@media (max-width: 640px) { .floor { grid-template-columns: minmax(0, 1fr); } }
+.floor .dir { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+.floor .dir > b { display: block; font: 600 13px/1.2 var(--font-mono); color: var(--fg); }
+.floor .dir > small { display: block; margin-top: 4px; font-size: 13px; color: var(--muted); }
+.floor .trees { display: grid; gap: 8px; margin-top: 12px; }
+.floor .tree { display: grid; grid-template-columns: 4px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 12px; border-radius: 10px; background: var(--surface-2); font: 500 12.5px/1.3 var(--font-mono); color: var(--fg-2); min-width: 0; }
+.floor .tree i { align-self: stretch; border-radius: 2px; background: currentColor; }
+.floor .tree span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.floor .tree em { font-style: normal; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.floor .tree.c-shape i, .floor .tree.c-shape em { color: var(--s-shape); }
+.floor .tree.c-glaze i, .floor .tree.c-glaze em { color: var(--s-glaze); }
+.floor .tree.c-ship i, .floor .tree.c-ship em { color: var(--s-ship); }
+.floor .tree.c-any i, .floor .tree.c-any em { color: var(--muted); }
+
+/* ── tables ─────────────────────────────── */
+.tbl { margin-top: 22px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--surface); }
+.tbl table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.tbl th { text-align: left; font: 500 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--bg-2); }
+.tbl td { padding: 11px 14px; border-top: 1px solid var(--line-soft); color: var(--fg-2); vertical-align: top; }
+.tbl tr:first-child td { border-top: 0; }
+.tbl td code { white-space: nowrap; }
+.tbl td.st { width: 1%; white-space: nowrap; font: 500 11px/1.5 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.tbl td.st::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; margin-right: 7px; vertical-align: 0; }
+@media (max-width: 600px) {
+  .tbl thead { display: none; }
+  .tbl tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; padding: 10px 14px; border-top: 1px solid var(--line-soft); gap: 4px 10px; }
+  .tbl tr:first-child { border-top: 0; }
+  .tbl td { padding: 0; border: 0; }
+  .tbl td:first-child { grid-column: 1 / -1; color: var(--fg); }
+  .tbl td code { white-space: normal; overflow-wrap: anywhere; }
+}
+
+/* ── faq ────────────────────────────────── */
+.faq { margin-top: 22px; display: grid; gap: 8px; }
+.faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.faq summary {
+  cursor: pointer; list-style: none; padding: 14px 44px 14px 18px; position: relative;
+  font-weight: 600; color: var(--fg); font-size: 16px;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after {
+  content: "+"; position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+  font: 500 20px/1 var(--font-mono); color: var(--ember); transition: transform .2s;
+}
+.faq details[open] summary::after { transform: translateY(-50%) rotate(45deg); }
+.faq details > div { padding: 0 18px 16px; }
+.faq details p { margin: 0; font-size: 15.5px; }
+.faq details p + p { margin-top: 10px; }
+
+/* ── cheat sheet ────────────────────────── */
+.cheats { margin-top: 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 640px) { .cheats { grid-template-columns: minmax(0, 1fr); } }
+.cheat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; min-width: 0; }
+.cheat code { display: block; font-size: 13px; color: var(--ember); overflow-wrap: anywhere; }
+.cheat span { display: block; margin-top: 3px; font-size: 14px; color: var(--fg-2); }
+
+.finale { margin-top: 48px; padding: 28px 26px; border-radius: 16px; border: 1px solid var(--line); position: relative; overflow: hidden; background: var(--surface); }
+.finale::before { content: ""; position: absolute; inset: auto -20% -80% 30%; height: 160%; background: radial-gradient(closest-side, var(--glow), transparent 70%); pointer-events: none; }
+.finale p { position: relative; margin: 0; font: 600 clamp(24px, 3vw, 30px)/1.2 var(--font-display); color: var(--fg); letter-spacing: .01em; }
+.finale small { position: relative; display: block; margin-top: 12px; font-size: 15px; color: var(--fg-2); }
+.note code { overflow-wrap: anywhere; }
+.note strong { color: var(--fg-2); }
+
+/* ── footer (shared site footer) ────────── */
+.site-foot { border-top: 1px solid var(--line-soft); padding-block: 28px; font: 500 12px/1.6 var(--font-mono); color: var(--muted); }
+.site-foot .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; }
+.site-foot b { color: var(--fg); font-weight: 600; }
+.site-foot a { color: var(--fg-2); }
+.site-foot a:hover { color: var(--ember); }
+.site-foot code { color: var(--ember); }
+
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><b>kiln</b></a>
+    <nav class="site" aria-label="Docs">
+      <a href="getting-started.html">Get started</a>
+      <a href="tutorial.html" aria-current="page">Tutorial</a>
+      <a href="concepts.html">Concepts</a>
+      <a href="skills.html">Skills</a>
+      <a href="cli.html">CLI</a>
+      <a href="https://github.com/pavelsimo/kiln">GitHub</a>
+    </nav>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle color theme"><i></i><span id="themeLbl">Light</span></button>
+  </div>
+  <div class="progress" id="progress"></div>
+</header>
+
+<section class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">Tutorial · a first week</div>
+      <h1>Your first week with <em>kiln</em></h1>
+      <p class="lede">Let's walk through a first week with kiln in your repo. We'll install it, introduce it to your project, ship a feature, fix a bug, run a few tasks side by side, and cut a release. It's about a twenty minute read.</p>
+      <div class="needs" aria-label="What you need">
+        <span><b>✓</b>a repo on GitHub</span>
+        <span><b>✓</b>gh, logged in</span>
+        <span><b>✓</b>Claude Code, Codex or Cursor</span>
+      </div>
+      <p class="note"><strong>Before you start:</strong> install the binary with <code>brew install pavelsimo/tap/kiln</code> or <code>go install github.com/pavelsimo/kiln@latest</code>. <a href="getting-started.html">Get started</a> covers the other options.</p>
+    </div>
+    <figure>
+      <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>friday afternoon · terminal</span></div><span class="p">$</span> kiln status
+<span class="e">KILN · acme/app · 3 in flight · 2 waiting on you</span>
+#42   ✨ add dark mode to settings        M  glaze  PR #57  <span class="h">● CI 4/6</span>
+#43   🐛 fix login loop after session ex… S  ship   PR #58  <span class="k">✓ green</span> · <span class="e">◆2 you</span>
+#47   ♻️ split rate limiter store from … L  shape  no PR   · <span class="e">◆1 you · plan ready</span>
+<span class="d">backlog  6 ready · 2 need triage · 1 blocked (#39)</span>
+<span class="d">memory   3 retro notes queued for kiln-retro</span></pre>
+      <figcaption>Where you'll be by the end of the week: three tasks moving at once, and kiln telling you exactly which two need you.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<div class="wrap page">
+  <nav class="rail" aria-label="Chapters">
+    <h4>Chapters</h4>
+    <ol id="railList">
+      <li><a href="#idea"><span>01</span>The idea</a></li>
+      <li><a href="#install"><span>02</span>Install</a></li>
+      <li><a href="#onboard"><span>03</span>Meet your repo</a></li>
+      <li><a href="#first"><span>04</span>Your first task</a></li>
+      <li><a href="#trail"><span>05</span>Reading the trail</a></li>
+      <li><a href="#bug"><span>06</span>A quick bug fix</a></li>
+      <li><a href="#chores"><span>07</span>Chores and skips</a></li>
+      <li><a href="#autonomy"><span>08</span>More autonomy</a></li>
+      <li><a href="#parallel"><span>09</span>Several at once</a></li>
+      <li><a href="#solo"><span>10</span>Skills on their own</a></li>
+      <li><a href="#learn"><span>11</span>Letting it learn</a></li>
+      <li><a href="#checks"><span>12</span>Your own checks</a></li>
+      <li><a href="#release"><span>13</span>Cutting a release</a></li>
+      <li><a href="#update"><span>14</span>Staying current</a></li>
+      <li><a href="#faq"><span>15</span>When things feel off</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+<!-- ── 01 ─────────────────────────────── -->
+<section class="chapter" id="idea">
+  <div class="eyebrow">Chapter 01</div>
+  <h2>The idea in one minute</h2>
+  <p class="lead">You give kiln a task in plain words, and it handles it the way a careful teammate would.</p>
+  <p>It writes the task down as a GitHub issue. It makes a plan and shows it to you. It builds the change on its own branch, checks its own work, opens a pull request, gets it green, merges it, and writes down anything worth remembering for next time.</p>
+  <p>Kiln isn't a new agent, though. It comes in two parts, and it helps to know which is which:</p>
+  <div class="split">
+    <div class="box">
+      <h4>The kiln binary<small>facts</small></h4>
+      <p>A small command line tool. It installs everything, and it answers questions that have exact answers by reading <code>git</code> and GitHub: what's in flight, is CI green, can this PR merge, what's the next version. No AI involved, so it gives the same answer every time.</p>
+    </div>
+    <div class="box">
+      <h4>The skills<small>judgment</small></h4>
+      <p>Instructions the agent you already use follows, for anything that needs thinking: writing the issue, planning, building, proving the change works, reviewing. When a skill needs a fact, it asks the binary instead of guessing.</p>
+    </div>
+  </div>
+  <p>Your agent still does the work. Kiln gives it a routine, a place to keep notes, and a source of facts it can't argue with. Throughout this tutorial, lines starting with <code>/kiln</code> run inside your agent, and plain <code>kiln …</code> commands run in a terminal.</p>
+  <p>That routine has six stages. They're named after the way a potter fires clay, which is where the name comes from: the temperature climbs, holds, and then cools slowly so nothing cracks.</p>
+  <div class="strip big" role="list" aria-label="The six stages">
+    <div class="c-gather" role="listitem"><i></i><span>Gather</span><small>Your sentence becomes an issue.</small></div>
+    <div class="c-shape" role="listitem"><i></i><span>Shape</span><small>Kiln reads the code and plans.</small></div>
+    <div class="c-fire" role="listitem"><i></i><span>Fire</span><small>It builds, test first.</small></div>
+    <div class="c-glaze" role="listitem"><i></i><span>Glaze</span><small>It verifies and reviews.</small></div>
+    <div class="c-ship" role="listitem"><i></i><span>Ship</span><small>PR, green checks, merge.</small></div>
+    <div class="c-temper" role="listitem"><i></i><span>Temper</span><small>It writes down what it learned.</small></div>
+  </div>
+  <p>Two moments in there belong to you. Kiln stops <strong>before it writes any code</strong>, so you can look at the plan, and <strong>before it merges</strong>, so you can look at the result. Everything in between runs on its own.</p>
+  <div class="gates">
+    <span><i class="dia"></i>gate 1 · the plan</span>
+    <span><i class="dia"></i>gate 2 · the merge</span>
+  </div>
+  <p>You can change how often kiln stops later on (that's chapter 8), but this is where everyone starts, and it's a pretty comfortable place to stay.</p>
+  <p class="why"><a href="concepts.html">Why six stages and two gates</a></p>
+</section>
+
+<!-- ── 02 ─────────────────────────────── -->
+<section class="chapter" id="install">
+  <div class="eyebrow">Chapter 02</div>
+  <h2>Install it</h2>
+  <p class="lead">Kiln ships as a single binary with every skill baked in. From the root of your repo, run one command.</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>terminal</span></div><span class="p">$</span> kiln init
+  <span class="k">✓</span> git repo · gh authenticated as octocat
+  <span class="k">✓</span> .kiln/ written · 21 skills · config.yaml · kiln.lock <span class="d">(41 created)</span>
+  <span class="k">✓</span> linked → .claude/skills  .agents/skills  .cursor/skills
+  <span class="k">✓</span> 14 labels · issue + PR templates · ci.yml
+  next: run <span class="e">/kiln-onboard</span> in your agent</pre>
+  </figure>
+  <p>That's it for setup. Here's what just happened, in plain terms:</p>
+  <div class="split">
+    <div class="box">
+      <h4>In your repo<small>.kiln/</small></h4>
+      <p>The skills, a <code>config.yaml</code> with sensible defaults, <code>memory/</code> and <code>verify/</code> skeletons, and <code>kiln.lock</code>, which remembers a fingerprint of every skill file so updates can be careful later.</p>
+    </div>
+    <div class="box">
+      <h4>For your agents<small>symlinks</small></h4>
+      <p>Each skill is linked into <code>.claude/skills</code>, <code>.agents/skills</code> and <code>.cursor/skills</code>. One copy of the truth, every agent reads it. Pass <code>--agents claude,codex</code> to pick which ones.</p>
+    </div>
+    <div class="box">
+      <h4>On GitHub<small>labels · templates · CI</small></h4>
+      <p>Fourteen labels that kiln uses to track where each issue is, plus an issue template, a PR template, and a starter CI workflow in <code>.github/</code>. No GitHub remote yet? <code>--no-github</code> writes the files and skips the labels.</p>
+    </div>
+    <div class="box">
+      <h4>A signpost<small>AGENTS.md · CLAUDE.md</small></h4>
+      <p>A small marked block telling any agent that opens your repo to start with kiln's router. Everything outside the markers is yours.</p>
+    </div>
+  </div>
+  <p>Kiln is polite about your existing files. If you already have a <code>ci.yml</code> or a PR template, it leaves them alone unless you pass <code>--force</code>, and even <code>--force</code> never touches your config, memory or verify files. Running <code>kiln init</code> a second time is harmless, so if you're ever unsure whether it finished, just run it again. Add <code>--dry-run</code> to see what it would do first.</p>
+  <p>If something seems off, <code>kiln doctor</code> checks the whole setup and tells you what to fix:</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>terminal</span></div><span class="p">$</span> kiln doctor
+  <span class="k">✓</span> git repo app
+  <span class="k">✓</span> origin is git@github.com:acme/app.git
+  <span class="k">✓</span> gh authenticated as octocat
+  <span class="k">✓</span> 14 kiln labels present
+  <span class="k">✓</span> config valid · autonomy gated
+  <span class="k">✓</span> 21 skills, all match kiln.lock
+  <span class="k">✓</span> .claude/skills: 21 skills linked
+  <span class="k">✓</span> .agents/skills: 21 skills linked
+  <span class="k">✓</span> .cursor/skills: 21 skills linked
+  <span class="k">✓</span> worktrees go in ../app.kiln · 0 in use
+  <span class="h">!</span> no verify driver yet; UI and API checks will be INCONCLUSIVE
+    <span class="d">fix: run /kiln-verifier create (or /kiln-onboard)</span></pre>
+    <figcaption>A <code>!</code> is a warning and doesn't change the exit code. A <code>✗</code> means something needs fixing, and doctor exits 3.</figcaption>
+  </figure>
+  <div class="callout">
+    <b>Tip</b>
+    <p>Got your own skills in <code>.claude/skills/</code> already? They stay exactly where they are. Kiln links one folder per skill, so it sits next to yours instead of replacing the whole directory.</p>
+    <p>It works the other way too: kiln never relies on any skill it didn't install. Everything it runs comes out of that one binary, so it behaves the same on a fresh machine as on yours.</p>
+  </div>
+  <p class="why"><a href="cli.html">What kiln init does, flag by flag</a></p>
+</section>
+
+<!-- ── 03 ─────────────────────────────── -->
+<section class="chapter" id="onboard">
+  <div class="eyebrow">Chapter 03</div>
+  <h2>Introduce kiln to your repo</h2>
+  <p class="lead">Kiln now knows how to work. It doesn't know your project yet. That's the one thing you do once, from inside your agent.</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>your agent</span></div><span class="p">›</span> /kiln-onboard
+  <span class="d">reading</span> package.json · pnpm-lock.yaml · vite.config.ts · .github/workflows/
+  <span class="k">✓</span> stack     TypeScript · React 19 · Vite · pnpm · Vitest · Playwright
+  <span class="k">✓</span> commands  test · lint · typecheck · build · e2e  <span class="d">(each run once, all exit 0)</span>
+  <span class="k">✓</span> wrote .kiln/memory/PROJECT.md
+  <span class="k">✓</span> ci.yml placeholder replaced with the real commands
+  <span class="k">✓</span> 1 standing check from ci.yml → .kiln/verify/checks.yaml
+
+  <span class="d">kiln-verifier create</span>
+  <span class="k">✓</span> web app · pnpm dev --port 5173 · ready at /health
+  <span class="k">✓</span> drive with Playwright · sign in as seed-user
+  <span class="k">✓</span> 4 features mapped · settings, auth, history, export
+  <span class="k">✓</span> proven once: launch → doctor → drive "settings" → evidence → cleanup
+
+  <span class="k">✓</span> PR #40 🔧 chore(kiln): onboard acme/app
+  <span class="h">please review</span> "Do not touch without asking" first</pre>
+  </figure>
+  <p>Kiln looks for the real commands your project uses, the ones CI actually runs, and runs each one once on a clean checkout rather than guessing. Then it writes them into a file called <code>PROJECT.md</code>:</p>
+  <div class="card">
+    <div class="card-head"><b>PROJECT.md</b> · .kiln/memory/</div>
+    <pre><span class="h"># acme/app</span>
+<span class="d">Written by kiln-onboard. Edited only via kiln-retro PRs.</span>
+<span class="h">## Stack</span>
+TypeScript · React 19 · Vite · pnpm · Vitest · Playwright
+<span class="h">## Commands</span>
+test:      pnpm test
+lint:      pnpm lint
+typecheck: pnpm tsc --noEmit
+build:     pnpm build
+e2e:       pnpm test:e2e
+<span class="h">## Conventions</span>
+- components in src/features/&lt;area&gt;/, one folder per feature
+- no default exports
+<span class="h">## Do not touch without asking</span>
+- src/billing/**   · payments, needs human review
+- .github/workflows/release.yml</pre>
+  </div>
+  <p>Please read this file. It takes two minutes, and it's the most valuable two minutes of the whole setup. Every skill reads it. If the test command in here is wrong, every check kiln runs later will be wrong in the same way.</p>
+  <p>The part worth slowing down for is <strong>Do not touch without asking</strong>. Onboarding proposes a few candidates and asks you once to confirm, trim or add. Anything listed there, kiln will stop and check with you before editing, in every autonomy mode. Payments, auth, release workflows, that one module nobody fully understands: put them here.</p>
+  <p>Onboarding does one more thing, and it's a big one. It teaches kiln how to actually <em>run your app</em>. The <code>kiln-verifier</code> skill works out how to start it, how to tell it's ready, how to click through it (or call it, for an API, or run it, for a CLI), and how to shut it down cleanly. It writes all that into <code>.kiln/verify/DRIVER.md</code>, plus three to five short files in <code>features/</code> describing how a user reaches each area.</p>
+  <p>Then, before handing it over, it runs the whole thing once for real. A driver that has never been run is just a guess, so you get one that's already been proven. You'll see why this matters in the next chapter, when kiln checks its own work.</p>
+  <p>All of it lands as one pull request on a <code>kiln/onboard</code> branch. Review it like any other PR. It has no issue behind it, so <code>kiln ready</code> gates it on CI alone, and kiln always waits for your yes before merging it, whatever the autonomy mode. After that, kiln only changes <code>PROJECT.md</code> through retro PRs (chapter 11), though you can edit it like any other file.</p>
+  <p class="why"><a href="concepts.html">How kiln's memory is organized</a></p>
+</section>
+
+<!-- ── 04 ─────────────────────────────── -->
+<section class="chapter" id="first">
+  <div class="eyebrow">Chapter 04</div>
+  <h2>Your first task</h2>
+  <p class="lead">Time for the fun part. Let's add dark mode to the settings page and follow it all the way to main.</p>
+
+  <h3>Hand it a sentence</h3>
+  <div class="strip" aria-label="Stage: Gather">
+    <div class="c-gather on"><i></i><span>Gather</span></div>
+    <div class="c-shape"><i></i><span>Shape</span></div>
+    <div class="c-fire"><i></i><span>Fire</span></div>
+    <div class="c-glaze"><i></i><span>Glaze</span></div>
+    <div class="c-ship"><i></i><span>Ship</span></div>
+    <div class="c-temper"><i></i><span>Temper</span></div>
+  </div>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>your agent</span></div><span class="p">›</span> /kiln "add dark mode to settings"
+
+  <span class="d">goal</span>   Users can switch Settings to a dark theme, and the choice sticks.
+  <span class="d">type</span>   feature · size M · playbook feature · autonomy gated
+
+  <span class="d">todo</span>
+  ☐ 1.  kiln-recall · lessons, decisions and past tasks about settings
+  ☐ 2.  kiln-issue · ✨ add dark mode to settings with predicates P1..Pn
+  ☐ 3.  kiln-explore · map the code in settings
+  ☐ 4.  <span class="h">◆1</span> kiln-plan · plan comment on #&lt;n&gt;
+  ☐ 5.  kiln-plan · decision record in the worktree, if the plan made a call
+  ☐ 6.  kiln-start · ../app.kiln/&lt;n&gt;-&lt;slug&gt;
+  ☐ 7.  kiln-build · test-first, one predicate at a time
+  ☐ 8.  kiln-commit · gitmoji commits, reordered before the PR
+  ☐ 9.  kiln-verify · P1..Pn + standing checks · checker fresh
+  ☐ 10. kiln-review · independent
+  ☐ 11. kiln-pr · ready PR, Closes #&lt;n&gt;
+  ☐ 12. kiln-watch · conflicts, threads, CI
+  <span class="h">☒ 13. skip: kiln-verify swarm · size M, verdict from step 9 covers it</span>
+  ☐ 14. kiln-log · final pass: skips, retro notes, pushed before ◆2
+  ☐ 15. <span class="h">◆2</span> kiln-merge · PR #&lt;pr&gt;
+  ☐ 16. kiln-retro · offer if retro_queue is 5 or more</pre>
+    <figcaption>The blanks like <code>#&lt;n&gt;</code> fill in as the run goes: the issue doesn't have a number until step 2 creates it.</figcaption>
+  </figure>
+  <p>Before kiln does anything at all, it tells you what it thinks you asked for. Read that <strong>goal</strong> line. If it's off, say so now, because this is the cheapest moment there will ever be to correct it.</p>
+  <p>Next it sizes the work. <strong>M</strong> means it'll touch several parts of the code, so the checking later will be done by a separate checker and reviewer with fresh eyes. Small tasks get a lighter check, large ones a much heavier one. Then it picks a <strong>playbook</strong>, which is the recipe for this kind of task, and copies its steps into the agent's todo list word for word. Nothing on that list can quietly disappear. See step 13? It only applies to size L, so kiln rewrote it as a skip with a reason instead of deleting it. You'll see why that matters in chapter 7.</p>
+
+  <p>The first step, <code>kiln-recall</code>, reads the project's memory for anything related. On a brand new install there's not much there yet. A month from now, this is where kiln remembers that the settings mock lives in a weird folder, or that visual snapshots need refreshing after any color change.</p>
+  <p>Then it opens the issue:</p>
+  <div class="card">
+    <div class="card-head"><b>✨ add dark mode to settings</b> #42</div>
+    <div class="card-body">
+      <div class="pills" style="margin-bottom:14px"><span class="pill ty">type:feature</span><span class="pill sz">size:M</span><span class="pill kl">kiln:ready</span></div>
+      <h5>Problem</h5>
+      <p>Settings only has a light theme. Several users have asked for a dark one.</p>
+      <h5>Acceptance criteria</h5>
+      <ul>
+        <li>P1 · a toggle in Settings → Appearance switches the page to dark</li>
+        <li>P2 · the choice survives a reload</li>
+        <li>P3 · a first visit follows the OS theme</li>
+        <li>P4 · must not change: the light theme looks exactly as before</li>
+      </ul>
+      <h5>Out of scope</h5>
+      <p>Other pages. They can pick up the theme in a follow-up.</p>
+    </div>
+  </div>
+  <p>Those acceptance criteria are the contract. Notice how they're written: each one is something you could watch happen or not happen. Kiln calls them <strong>predicates</strong> and numbers them, because at the end it has to prove every single one before it's allowed to call the task done. "Settings looks nicer" would never make this list. Kiln would rewrite it into something checkable, or ask you.</p>
+  <p>Look at P4 too. Kiln always adds at least one thing that must <em>not</em> change, because breaking what already worked is the classic way a feature that looks finished goes wrong.</p>
+  <div class="callout">
+    <b>Tip</b>
+    <p>If you'd typed something vague, like <code>/kiln "make settings nicer"</code>, kiln wouldn't invent criteria for you. It switches into interview mode and asks up to five questions in one go. Rough ideas are welcome. They just take an extra minute.</p>
+  </div>
+
+  <h3>Gate 1: the plan <span class="tag c-shape">shape</span></h3>
+  <div class="strip" aria-label="Stage: Shape">
+    <div class="c-gather done"><i></i><span>Gather</span></div>
+    <div class="c-shape on"><i></i><span>Shape</span></div>
+    <div class="c-fire"><i></i><span>Fire</span></div>
+    <div class="c-glaze"><i></i><span>Glaze</span></div>
+    <div class="c-ship"><i></i><span>Ship</span></div>
+    <div class="c-temper"><i></i><span>Temper</span></div>
+  </div>
+  <p>Kiln explores the code it's going to touch, posts a plan as a comment on the issue, moves the issue to <code>kiln:planned</code>, and waits for you. Here's roughly how that conversation goes:</p>
+  <div class="chat">
+    <div class="msg kiln gate"><b>kiln</b><div class="bubble">
+      <p><span class="g">◆ gate 1</span> · plan for #42 is ready</p>
+      <p><span class="dim">approach</span> move colors to CSS custom properties on :root and swap them under [data-theme="dark"]. Add a toggle in Settings → Appearance. Save the choice in a cookie.</p>
+      <p><span class="dim">files</span> styles/tokens.css (new) · 14 components swap hex for tokens · AppearanceSection.tsx</p>
+      <p><span class="dim">tests</span> e2e through the driver for P1, P2 and P4 · e2e with prefers-color-scheme: dark for P3</p>
+      <p><span class="dim">risks</span> every visual snapshot will change once</p>
+    </div></div>
+    <div class="msg you"><b>you</b><div class="bubble">Looks good. Store the choice in localStorage instead of a cookie though, we don't need it on the server.</div></div>
+    <div class="msg kiln"><b>kiln</b><div class="bubble">
+      <p>Posted rev 2 of the plan on #42. The theme now persists in localStorage, and a first visit follows prefers-color-scheme. Approve?</p>
+    </div></div>
+    <div class="msg you"><b>you</b><div class="bubble">approved</div></div>
+  </div>
+  <p>So what should you actually look for at this gate? Three things, really:</p>
+  <ul class="plain">
+    <li><strong>Is this how you'd do it?</strong> If the approach surprises you, ask why. Sometimes kiln knows something you don't. Sometimes it's just wrong.</li>
+    <li><strong>Are these the files you expected?</strong> A file you didn't expect is usually the most interesting line in the plan.</li>
+    <li><strong>Do you believe the checks?</strong> If the predicates or tests would pass even with a broken feature, say so. This is the last cheap moment to change what "done" means. After this gate, predicates are never loosened to make something pass.</li>
+  </ul>
+  <p>You don't need special syntax. Talk to it the way you'd leave a comment on a colleague's PR. And because the plan lives on the issue (every revision as its own comment), your teammates can see it and chime in too.</p>
+
+  <h3>Building, next door <span class="tag c-fire">fire</span></h3>
+  <div class="strip" aria-label="Stage: Fire">
+    <div class="c-gather done"><i></i><span>Gather</span></div>
+    <div class="c-shape done"><i></i><span>Shape</span></div>
+    <div class="c-fire on"><i></i><span>Fire</span></div>
+    <div class="c-glaze"><i></i><span>Glaze</span></div>
+    <div class="c-ship"><i></i><span>Ship</span></div>
+    <div class="c-temper"><i></i><span>Temper</span></div>
+  </div>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>your agent</span></div>  <span class="k">✓</span> kiln-start   worktree ../app.kiln/42-dark-mode-settings
+               branch kiln/42-dark-mode-settings · #42 → kiln:in-progress
+  <span class="k">✓</span> kiln-build   test first · 11 tests · all green
+  <span class="k">✓</span> kiln-commit  3 commits, reordered
+               ♻️ refactor(settings): move colors to css tokens
+               ✨ feat: add theme toggle to settings
+               ✨ feat: remember the theme choice across reloads</pre>
+  </figure>
+  <p>Notice where the work happens: <code>../app.kiln/42-dark-mode-settings</code>. That's a separate git worktree, a second checkout sitting right next to your repo, on a fresh branch cut from <code>origin/main</code>. Your own checkout isn't touched, so you can keep working in it while kiln builds. No stashing, no switching branches under your feet.</p>
+  <p>Kiln builds test first: a test that fails for the right reason, the smallest change that makes it pass, then a tidy up. Each loop ends in a small commit with a gitmoji and a plain message, and it always stages files by name. It never sweeps up everything with <code>git add -A</code>, so stray files stay out of your history. It also never adds AI attribution or co-author trailers. The commits are yours.</p>
+
+  <h3>Checking its own work <span class="tag c-glaze">glaze</span></h3>
+  <div class="strip" aria-label="Stage: Glaze">
+    <div class="c-gather done"><i></i><span>Gather</span></div>
+    <div class="c-shape done"><i></i><span>Shape</span></div>
+    <div class="c-fire done"><i></i><span>Fire</span></div>
+    <div class="c-glaze on"><i></i><span>Glaze</span></div>
+    <div class="c-ship"><i></i><span>Ship</span></div>
+    <div class="c-temper"><i></i><span>Temper</span></div>
+  </div>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>your agent</span></div>  <span class="h">kiln-verify</span> · #42 · size M · checker: fresh
+  <span class="d">gates</span>          pnpm test · lint · tsc --noEmit · build   <span class="k">all exit 0</span>
+  <span class="e">P1</span>  toggle switches the page to dark   <span class="k">VERIFIED</span>  5
+      <span class="d">ran</span>  driver · settings/appearance · click theme-toggle
+      <span class="d">saw</span>  &lt;html data-theme="dark"&gt; · P1-settings-dark.png
+  <span class="e">P2</span>  choice survives a reload           <span class="k">VERIFIED</span>  5
+      <span class="d">ran</span>  reload · read localStorage.theme → "dark"
+  <span class="e">P3</span>  first visit follows the OS theme   <span class="k">VERIFIED</span>  4
+      <span class="d">ran</span>  pnpm test:e2e theme.spec.ts --project os-dark
+  <span class="e">P4</span>  light theme unchanged              <span class="k">VERIFIED</span>  5
+      <span class="d">ran</span>  e2e snapshots, light · 0 diffs
+  <span class="d">tests audited</span>  11 used · <span class="h">1 rejected</span> (settings.test.ts:40 asserts only "not null")
+  <span class="d">overall</span>        <span class="k">VERIFIED</span> on a1c9e0f
+  <span class="d">evidence</span>       .kiln/verify/evidence/42/   <span class="d">(gitignored)</span>
+
+  <span class="d">$ kiln verdict 42 --only verify</span>
+  <span class="d">#42 · head 7e3a9b2 · .kiln/memory/tasks/42-dark-mode-settings.md</span>
+    <span class="k">✓</span> verify  VERIFIED on a1c9e0f · same-tree
+    <span class="k">fresh</span>
+
+  <span class="h">kiln-review</span> · size M · reviewer subagent
+  <span class="k">PASS</span> on 7e3a9b2 · 0 blockers · 2 nits</pre>
+  </figure>
+  <p>This is the part of kiln most worth trusting, so let's slow down.</p>
+  <p>Green tests are just the start. Kiln then goes through the predicates one by one and checks each on the <strong>real thing it describes</strong>. P1 is about something you see on screen, so kiln starts your app with the driver it built during onboarding, clicks the actual toggle, and takes a screenshot. A unit test for the toggle component wouldn't count here. It could pass while the real page stays light.</p>
+  <p>Each predicate also says how strong its evidence is, on a five step <strong>ladder</strong>: (1) someone said so, (2) here's the line of code, (3) here's the reasoning, (4) a test ran the real code, (5) we watched it happen in the running app. Only 4 and 5 count as proof. Anything you can see on screen or call over HTTP needs a 5 at this size.</p>
+  <p>Kiln also audits the tests it leans on. See that rejected test? It only checked that something wasn't empty, so it would have passed even if the feature returned garbage. Kiln won't count it as evidence, and it tells you so you can fix it.</p>
+  <p>Every predicate ends up with one of three verdicts: <strong>VERIFIED</strong>, <strong>NOT VERIFIED</strong>, or <strong>INCONCLUSIVE</strong>, which means "I couldn't check this", maybe because a test account was missing. The overall verdict is the weakest of the lot, and kiln never rounds INCONCLUSIVE up to a pass.</p>
+  <p>For an M task, the checking is done by a fresh agent that only gets the predicates, the diff, the commit and the driver. It never saw the build conversation, so it can't be talked into anything. The code review works the same way, with a reviewer that only sees the diff, the issue and <code>PROJECT.md</code>.</p>
+  <p>Both results are tied to a commit. The report goes into the task's journal, and then kiln asks the binary whether it's on record. That's the <code>kiln verdict</code> call above. <code>--only verify</code> judges just the verify result, since the review hasn't run yet. And <code>same-tree</code> means the only thing that changed since <code>a1c9e0f</code> is the journal commit itself, which the binary ignores, so the verdict still holds.</p>
+  <p>If a predicate comes back <strong>NOT VERIFIED</strong> or the reviewer says <strong>FIX</strong>, the work goes back to the Fire stage and loops: build, commit, verify, review. On the third loop for the same problem, kiln stops and asks you. It all shows up in the task's journal, but you don't have to do anything.</p>
+
+  <h3>Gate 2: the merge <span class="tag c-ship">ship</span></h3>
+  <div class="strip" aria-label="Stage: Ship">
+    <div class="c-gather done"><i></i><span>Gather</span></div>
+    <div class="c-shape done"><i></i><span>Shape</span></div>
+    <div class="c-fire done"><i></i><span>Fire</span></div>
+    <div class="c-glaze done"><i></i><span>Glaze</span></div>
+    <div class="c-ship on"><i></i><span>Ship</span></div>
+    <div class="c-temper"><i></i><span>Temper</span></div>
+  </div>
+  <p>Kiln pushes the branch, opens PR #57 and moves the issue to <code>kiln:review</code>. It's a real, ready PR (kiln never opens drafts), filled in from your template and ending with <code>Closes #42</code>. Then <code>kiln-watch</code> takes it to green. It always works in the same order: merge conflicts first, then review comments from your teammates, then CI. If a CI job fails, kiln decides whether it's a real failure or a flaky one, and retries a flaky job once.</p>
+  <p>Right before the gate, <code>kiln-log</code> makes its final pass over the journal (skips, retro notes) and pushes it. That has to happen now, because the merge deletes the branch and the worktree. Then kiln comes back to you:</p>
+  <div class="chat">
+    <div class="msg kiln gate"><b>kiln</b><div class="bubble">
+      <p><span class="g">◆ gate 2</span> · merge PR #57?</p>
+      <p>✨ feat: add dark mode to settings (#57)</p>
+      <p><span class="k">✓</span> checks 6/6 · <span class="k">✓</span> threads resolved · <span class="k">✓</span> 4/4 VERIFIED · <span class="k">✓</span> review PASS on 7e3a9b2</p>
+      <p><span class="dim">next</span> squash merge · close #42 · remove worktree and branch</p>
+    </div></div>
+    <div class="msg you"><b>you</b><div class="bubble">yes</div></div>
+    <div class="msg kiln"><b>kiln</b><div class="bubble">
+      <p><span class="k">✓</span> #57 squash merged · 3f2b7d1</p>
+      <p><span class="k">✓</span> removed kiln:review from #42</p>
+      <p><span class="k">✓</span> worktree ../app.kiln/42-dark-mode-settings removed</p>
+      <p><span class="k">✓</span> branch kiln/42-dark-mode-settings deleted</p>
+      <p><span class="k">✓</span> remote branch kiln/42-dark-mode-settings deleted</p>
+      <p><span class="dim">#42 closed · 1 retro note queued for kiln-retro</span></p>
+    </div></div>
+  </div>
+  <p>Take a quick look at that first line in the gate. Kiln squash merges, so the PR title becomes the one commit that lands on main, with the PR number on the end. If the title reads well, your history will too.</p>
+  <p>Every fact in that gate comes from the binary's <code>kiln ready</code>, which reads it straight from GitHub and your git history. You can ask it yourself from any terminal:</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>terminal</span></div><span class="p">$</span> kiln ready 57
+<span class="d">PR #57 · kiln/42-dark-mode-settings · head c52e0d8</span>
+  <span class="k">✓</span> open      open, not a draft
+  <span class="k">✓</span> conflicts no conflicts with main
+  <span class="k">✓</span> ci        6/6 green
+  <span class="k">✓</span> review    no review required
+  <span class="k">✓</span> threads   all review threads resolved
+  <span class="k">✓</span> closes    closes #42
+  <span class="k">✓</span> verdict   VERIFIED on a1c9e0f (same-tree) · review PASS
+  <span class="k">ready to merge</span></pre>
+    <figcaption>It never stops at the first problem, so a <code>✗</code> line lists everything that's left. When the answer is no, it exits 3.</figcaption>
+  </figure>
+  <p>The merge itself goes through <code>kiln merge</code>, which runs those same checks and flatly refuses (exit code 3) if anything is red or the verdict belongs to an older commit. It also pins the merge to the exact head commit it just checked, so a push that lands a second later can't sneak in. So even an agent that's very sure of itself can't merge a broken PR.</p>
+  <p>Kiln also doesn't take the merge on faith. After merging, it reads the PR back from GitHub and only says "merged" once GitHub agrees. Then it cleans up: the <code>kiln:*</code> label comes off the closed issue, and the worktree (only if it has no local changes) and both branches go away. Pass <code>--no-cleanup</code> if you'd rather keep them.</p>
+
+  <h3>Writing it down <span class="tag c-temper">temper</span></h3>
+  <div class="strip" aria-label="Stage: Temper">
+    <div class="c-gather done"><i></i><span>Gather</span></div>
+    <div class="c-shape done"><i></i><span>Shape</span></div>
+    <div class="c-fire done"><i></i><span>Fire</span></div>
+    <div class="c-glaze done"><i></i><span>Glaze</span></div>
+    <div class="c-ship done"><i></i><span>Ship</span></div>
+    <div class="c-temper on"><i></i><span>Temper</span></div>
+  </div>
+  <p>The last stage is quiet, and most of it already happened. Every skill handed <code>kiln-log</code> a line as it finished, and <code>kiln-log</code> committed the task's journal on the branch as it went. Its final pass ran before the merge gate, so when the PR squash merged, the journal went to main along with the code.</p>
+  <p>That "1 retro note queued" means kiln noticed something worth remembering (those snapshots really did all change). The last todo item offers a retro once five or more notes pile up, so this time it gets skipped with that reason. We'll get to retros in chapter 11.</p>
+  <p>And that's a full loop. Count what you actually did: one sentence to start, one correction on the plan, and two approvals. That's the whole idea.</p>
+  <p class="why"><a href="concepts.html">The same run, stage by stage</a></p>
+</section>
+
+<!-- ── 05 ─────────────────────────────── -->
+<section class="chapter" id="trail">
+  <div class="eyebrow">Chapter 05</div>
+  <h2>Reading the trail</h2>
+  <p class="lead">Everything kiln did is somewhere you already look. There's no dashboard to learn and no hidden database.</p>
+  <p>Kiln keeps a simple rule: <strong>files record why, GitHub records where.</strong> Anything that changes by itself, like CI status, labels or whether a PR is merged, is read live from GitHub every time. Anything that explains reasoning gets written to a file in your repo. That way the notes can't go stale, because they never try to track things that move.</p>
+  <div class="split">
+    <div class="box">
+      <h4>On GitHub<small>where things are</small></h4>
+      <ul>
+        <li><code>#42</code><span>the issue, with the plan as a comment</span></li>
+        <li><code>#57</code><span>the PR, its review and checks</span></li>
+        <li><code>labels</code><span>which stage every issue is in</span></li>
+      </ul>
+    </div>
+    <div class="box">
+      <h4>In .kiln/memory<small>why things happened</small></h4>
+      <ul>
+        <li><code>tasks/42-dark-mode-settings.md</code><span>the journal</span></li>
+        <li><code>decisions/…css-tokens.md</code><span>a decision record</span></li>
+        <li><code>lessons.md</code><span>what kiln has learned</span></li>
+        <li><code>../verify/</code><span>how to run your app</span></li>
+      </ul>
+    </div>
+  </div>
+  <p>The journal is the one you'll open most. It's a short, readable log of who did what:</p>
+  <div class="card">
+    <div class="card-head"><b>tasks/42-dark-mode-settings.md</b> · journal</div>
+    <pre><span class="d">| ts               | skill       | action               | ref     | result   |</span>
+| 2026-10-27 14:02 | kiln-issue  | opened issue         | #42     | <span class="k">ok</span>       |
+| 2026-10-27 14:09 | kiln-plan   | posted plan          | #42     | <span class="k">approved</span> |
+| 2026-10-27 14:31 | kiln-build  | 3 commits, 11 tests  | a1c9e0f | <span class="k">ok</span>       |
+| 2026-10-27 14:37 | kiln-verify | 4 predicates · fresh | a1c9e0f | <span class="k">VERIFIED</span> |
+| 2026-10-27 14:40 | kiln-review | reviewer subagent    | 7e3a9b2 | <span class="k">PASS</span>     |
+| 2026-10-27 14:42 | kiln-pr     | opened PR            | #57     | <span class="k">ok</span>       |
+| 2026-10-27 14:58 | kiln-watch  | 0 threads, 0 retries | #57     | <span class="k">ready</span>    |
+
+<span class="h">## Decisions</span>
+- CSS custom properties over a theme context → decisions/2026-10-27-css-tokens.md
+
+<span class="h">## Skipped</span>
+- skip: kiln-verify swarm · size M, verdict from step 9 covers it
+
+<span class="h">## Retro notes</span>
+- every visual snapshot changed after the token move; needed pnpm test:e2e --update</pre>
+  </div>
+  <p>Those verify and review rows matter to the binary too. <code>kiln verdict</code> and <code>kiln ready</code> read the latest one of each, and check whether its commit still matches the branch.</p>
+  <p>The decision record is the bit future you will thank present kiln for. Six months from now, when someone asks "why didn't we just use a React context for theming?", the answer is a file with a date on it, linked from the issue that caused it.</p>
+
+  <h3>Labels tell you where everything is</h3>
+  <p>Every open issue kiln is working on carries one <code>kiln:</code> label, and skills move it forward through <code>kiln move</code>, which refuses any jump the state machine doesn't allow (exit code 3). You, your teammates, or a different agent can all see where things stand on GitHub without asking kiln anything.</p>
+  <div class="flow" aria-label="Issue label states">
+    <span class="pill kl">kiln:needs-triage</span><span class="arr">→</span>
+    <span class="pill kl">kiln:ready</span><span class="arr">→</span>
+    <span class="pill kl">kiln:planned</span><span class="arr">→</span>
+    <span class="pill kl">kiln:in-progress</span><span class="arr">→</span>
+    <span class="pill kl">kiln:review</span><span class="arr">→</span>
+    <span class="pill done">closed</span>
+  </div>
+  <p>When the PR merges, the issue closes and <code>kiln merge</code> takes the last label off. If something gets stuck, the issue gets <span class="pill bl" style="vertical-align:1px">kiln:blocked</span> with a comment explaining why and recording where it came from. Once it's unblocked, it goes back to exactly that state.</p>
+  <p class="why"><a href="cli.html">The full label state machine, in kiln move</a></p>
+</section>
+
+<!-- ── 06 ─────────────────────────────── -->
+<section class="chapter" id="bug">
+  <div class="eyebrow">Chapter 06</div>
+  <h2>A bug, the quick way</h2>
+  <p class="lead">Not every task deserves the full ceremony. Let's fix something small and see how kiln scales itself down.</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>your agent</span></div><span class="p">›</span> /kiln "login loops after the session expires"
+
+  <span class="d">goal</span>   A user with an expired session lands on /login instead of a redirect loop.
+  <span class="d">type</span>   bug · size S · playbook bug · autonomy gated
+
+  <span class="d">todo</span>
+  ☐ 1.  kiln-recall · past bugs and lessons about auth
+  ☐ 2.  kiln-issue · 🐛 &lt;title&gt; with repro steps and predicates P1..Pn
+  ☐ 3.  kiln-explore · light: trace the failing path in auth
+  <span class="h">☒ 4.  skip: kiln-plan · S bug, the repro test is the plan</span>
+  ☐ 5.  kiln-start · ../app.kiln/&lt;n&gt;-&lt;slug&gt;
+  ☐ 6.  kiln-build · failing reproduction test, committed alone
+  ☐ 7.  kiln-build · smallest fix that turns the reproduction green
+  ☐ 8.  kiln-commit · ✅ test: reproduce … then 🐛 fix: …, in that order
+  ☐ 9.  kiln-verify · before/after: 2 of 2 on old, 0 of 2 on new · root cause at file:line
+  ☐ 10. kiln-review · self
+  ☐ 11. kiln-pr · ready PR, Closes #&lt;n&gt;
+  ☐ 12. kiln-watch · conflicts, threads, CI
+  ☐ 13. kiln-log · final pass: skips, retro notes, pushed before ◆2
+  ☐ 14. <span class="h">◆2</span> kiln-merge · PR #&lt;pr&gt;</pre>
+  </figure>
+  <p>Look at step 4. There's no plan to approve at all. For a size S bug, the bug playbook skips <code>kiln-plan</code>, and with it gate 1, and writes down why: the reproduction test <em>is</em> the plan. The first time kiln stops for you is the merge. If the bug turns out to be size M or bigger, the plan and its gate come back.</p>
+  <p>Kiln opens <strong>#43 🐛 fix login loop after session expiry</strong>, with the repro steps, what you expected and what actually happened. Then the bug playbook's one big rule kicks in. The failing test lands before the fix:</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>git log · kiln/43-login-loop-expiry</span></div>  <span class="h">b71e2c4</span>  ✅ test: reproduce login loop on expired session   <span class="e">✗ fails</span>
+  <span class="h">9c41d07</span>  🐛 fix: clear stale session on 401                <span class="k">✓ passes</span></pre>
+  </figure>
+  <p>Read in order, those two commits prove the bug existed, and prove this change is what fixed it. If someone ever reverts the fix by accident, that test will catch it.</p>
+  <p>Kiln goes one step further when it verifies a bug fix. It checks out the old code in a throwaway worktree and makes the bug happen <em>twice</em> in the real app, then sees it gone <em>twice</em> on the new code. Twice, because once can be a fluke. It also has to name the root cause at a specific line:</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>your agent</span></div>  <span class="h">kiln-verify</span> · #43 · size S · checker: self
+  <span class="d">gates</span>          pnpm test · lint · tsc --noEmit · build   <span class="k">all exit 0</span>
+  <span class="e">P1</span>  expired session lands on /login    <span class="k">VERIFIED</span>  5
+      <span class="d">old build</span>  loop seen 2 of 2 · old-1.png, old-2.png
+      <span class="d">new build</span>  lands on /login 2 of 2 · new-1.png, new-2.png
+  <span class="e">P2</span>  must not change: a valid session stays signed in   <span class="k">VERIFIED</span>  4
+      <span class="d">ran</span>  pnpm test src/auth/session.test.ts
+  <span class="d">root cause</span>     src/auth/middleware.ts:41 trusts a stale session cookie
+  <span class="d">overall</span>        <span class="k">VERIFIED</span> on 9c41d07</pre>
+  </figure>
+  <p>If the fix had only papered over the symptom (say, a retry or a swallowed error), kiln would mark it NOT VERIFIED even with every test green. And if it couldn't make the bug happen on the old code at all, the verdict is INCONCLUSIVE: you can't prove you fixed something you never saw break.</p>
+  <p>Because it's size S, the author does the verifying and the review is a self-review checklist rather than a separate reviewer. It's still real (the predicates, tests, lint, CI and the checklist all have to pass), it's just proportionate. And if <code>kiln-recall</code> found an earlier bug of the same kind, the journal gets a retro note naming both issues, which is how the next retro spots a pattern.</p>
+  <p class="why"><a href="concepts.html">All six playbooks side by side</a></p>
+</section>
+
+<!-- ── 07 ─────────────────────────────── -->
+<section class="chapter" id="chores">
+  <div class="eyebrow">Chapter 07</div>
+  <h2>Chores, and the skip list</h2>
+  <p class="lead">Dependency bumps, config tweaks, docs fixes. Kiln handles these with the chore playbook, and this is a good place to see how kiln skips things honestly.</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>your agent</span></div><span class="p">›</span> /kiln "bump eslint to v10"   <span class="d">→ chore · S</span>
+
+<span class="k">☑</span> 1.  kiln-recall · lessons about lint config
+<span class="k">☑</span> 2.  kiln-issue · #44 ⬆️ bump eslint to v10, short issue
+<span class="h">☒ 3.  skip: kiln-plan · chore with no design decision</span>
+<span class="k">☑</span> 4.  kiln-start · ../app.kiln/44-bump-eslint-v10
+<span class="k">☑</span> 5.  kiln-build · light: make the change
+<span class="k">☑</span> 6.  kiln-commit · ⬆️ chore: bump eslint to v10
+<span class="e">◐</span> 7.  kiln-verify · light: lint · build · matching standing checks
+☐ 8.  kiln-review · self
+☐ 9.  kiln-pr · ready PR, Closes #44
+☐ 10. kiln-watch · conflicts, threads, CI
+☐ 11. kiln-log · final pass: skips, pushed before ◆2
+☐ 12. <span class="h">◆2</span> kiln-merge · PR #&lt;pr&gt;</pre>
+  </figure>
+  <p>See that line with the cross? There's nothing to design in a version bump, so kiln skipped the plan. But it didn't just quietly drop the step. It rewrote it as <code>skip: &lt;skill&gt; · &lt;reason&gt;</code>, right there in the list, and the same line goes into the journal under <code>## Skipped</code>.</p>
+  <p>This is a small thing that turns out to matter a lot. When you look back at any run, the todo list tells you exactly what happened <em>and</em> what didn't, and why. A step can never just vanish. If you ever find yourself wondering "did it run the tests?", the answer is in the list.</p>
+  <p>Light doesn't mean skipped, either. Step 7 still produces a real verdict, with short predicates like "<code>pnpm lint</code> exits 0" plus any standing checks that match the change. And if a chore turns out to change behavior, it isn't a chore anymore: kiln stops, tells you, and re-routes it as a feature or a bug.</p>
+  <p>You can ask for skips too ("skip the plan, it's a one line change") and kiln will write your words down as the reason. The one exception is size L work. Big tasks always need a human to look at the plan, so that gate never gets skipped.</p>
+  <p class="why"><a href="concepts.html">Why the playbook becomes the todo list</a></p>
+</section>
+
+<!-- ── 08 ─────────────────────────────── -->
+<section class="chapter" id="autonomy">
+  <div class="eyebrow">Chapter 08</div>
+  <h2>Giving kiln more rope</h2>
+  <p class="lead">So far kiln has stopped at every gate that applied. That's the <code>gated</code> mode, and it's the default. There are two others.</p>
+  <div class="modes">
+    <div class="mode">
+      <h4>manual</h4>
+      <p>Kiln runs one skill, tells you what happened, and suggests the next step. Nothing chains on its own.</p>
+      <div class="stops">stops after every step<span class="who">Nice for your first day, if you want to watch closely.</span></div>
+    </div>
+    <div class="mode def">
+      <h4>gated <small>default</small></h4>
+      <p>Kiln runs the whole playbook and waits for you only before writing code and before merging.</p>
+      <div class="stops">◆1 plan · ◆2 merge<span class="who">Where most people live, most of the time.</span></div>
+    </div>
+    <div class="mode">
+      <h4>autopilot</h4>
+      <p>Kiln goes from sentence to merged PR, as long as <code>kiln ready</code> says yes: every predicate VERIFIED, CI green and the review clean.</p>
+      <div class="stops">◆1 for size L only<span class="who">For when the plans have been boring for a while.</span></div>
+    </div>
+  </div>
+  <p>Switching is one line in <code>.kiln/config.yaml</code>:</p>
+  <div class="card">
+    <div class="card-head"><b>config.yaml</b> · .kiln/</div>
+    <pre><span class="d"># How often kiln stops for you: manual | gated | autopilot</span>
+autonomy: <span class="h">gated</span>
+<span class="d"># The gates used when autonomy is gated</span>
+gates: [plan, merge]
+
+<span class="d"># How hard kiln checks its own work, by size label</span>
+rigor:
+  S: { verify: self, review: self }
+  M: { verify: fresh, review: independent }
+  L: { verify: swarm, review: adversarial, force_gates: [plan] }</pre>
+  </div>
+  <p>Notice the two settings are separate. <code>autonomy</code> decides how often kiln stops for you. The task's size decides how hard kiln checks its own work. Turning up autonomy doesn't lower the bar on review. In autopilot, an M task still needs a fresh checker to say VERIFIED and an independent reviewer to say PASS, both still valid for the exact commit being merged. Size L goes further: right before merging, three independent checkers rerun every gate, prove the key behavior live in the app, and audit the diff and the evidence.</p>
+  <p>And one rule holds in every mode: <strong>INCONCLUSIVE never merges on its own.</strong> In gated mode you'll see it at the merge gate and can accept it if you know why. Autopilot simply stops and asks.</p>
+  <h3>Things kiln always asks about</h3>
+  <p>No matter what mode you're in, some actions always stop and wait for a human. These aren't settings, so you can't turn them off by accident:</p>
+  <div class="hard">
+    <span>force-push to a shared branch</span>
+    <span>delete unmerged work or data</span>
+    <span>deploy, release or tag</span>
+    <span>merge with failing checks</span>
+    <span>change secrets or repo settings</span>
+    <span>message people outside the repo</span>
+    <span>edit a "Do not touch" path</span>
+  </div>
+  <div class="callout">
+    <b>Our suggestion</b>
+    <p>Spend a week on gated. If you notice you're approving plans without changing anything, that's your cue to try autopilot. You'll still see every PR, big tasks still wait for you at the plan, and you can always flip it back.</p>
+  </div>
+  <p class="why"><a href="concepts.html">Autonomy and rigor, the full table</a></p>
+</section>
+
+<!-- ── 09 ─────────────────────────────── -->
+<section class="chapter" id="parallel">
+  <div class="eyebrow">Chapter 09</div>
+  <h2>Several tasks at once</h2>
+  <p class="lead">Remember that worktree next door? Because every task gets its own, kiln can run a few of them at the same time without them stepping on each other.</p>
+  <div class="floor" aria-label="Repo and its worktrees">
+    <div class="dir">
+      <b>app/</b>
+      <small>your checkout, untouched. Keep working here.</small>
+      <div class="trees">
+        <div class="tree c-any"><i></i><span>main</span><em>you</em></div>
+      </div>
+    </div>
+    <div class="dir">
+      <b>../app.kiln/</b>
+      <small>one folder per task that has started building</small>
+      <div class="trees">
+        <div class="tree c-glaze"><i></i><span>42-dark-mode-settings</span><em>glaze</em></div>
+        <div class="tree c-ship"><i></i><span>43-login-loop-expiry</span><em>ship</em></div>
+        <div class="tree c-shape"><i></i><span>#47 gets one after ◆1</span><em>shape</em></div>
+      </div>
+    </div>
+  </div>
+  <p>The worktrees live outside your repo on purpose, so your test runner and linter never wander into them. By default kiln keeps at most three tasks in flight (that's <code>max_in_flight</code> in the config), and it cleans each worktree up after merging.</p>
+  <p>To see the whole floor at once, ask for the status:</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>your agent</span></div><span class="p">›</span> /kiln-status
+<span class="e">KILN · acme/app · 3 in flight · 2 waiting on you</span>
+#42   ✨ add dark mode to settings        M  glaze  PR #57  <span class="h">● CI 4/6</span>
+#43   🐛 fix login loop after session ex… S  ship   PR #58  <span class="k">✓ green</span> · <span class="e">◆2 you</span>
+#47   ♻️ split rate limiter store from … L  shape  no PR   · <span class="e">◆1 you · plan ready</span>
+<span class="d">backlog  6 ready · 2 need triage · 1 blocked (#39)</span>
+<span class="d">memory   3 retro notes queued for kiln-retro</span>
+
+<span class="e">◆2</span> #43  run /kiln-merge 58; it shows kiln ready and waits for your yes
+<span class="e">◆1</span> #47  read the plan (gh issue view 47 --comments), then approve or correct it
+   #42  next: kiln-watch #57</pre>
+  </figure>
+  <p>Two things are waiting on you, and you can answer both right from here:</p>
+  <div class="chat">
+    <div class="msg you"><b>you</b><div class="bubble">Merge #43. And show me the plan for #47.</div></div>
+    <div class="msg kiln"><b>kiln</b><div class="bubble">
+      <p><span class="k">✓</span> #58 squash merged · 9e1d4b6 · #43 closed · worktree and branches removed</p>
+      <p><span class="g">◆ gate 1</span> · #47 is size L, so the plan splits it into three sub-issues (#52, #53, #54), each with its own branch, PR and merge gate…</p>
+    </div></div>
+  </div>
+  <p>Status only reads. It never changes anything, so run it as often as you like, from any checkout. It's also pure fact, so it lives in the binary: <code>kiln status</code> in a plain terminal gives you exactly the same table, no agent needed. <code>/kiln-status</code> just runs it and adds one suggestion for each item that's waiting on you.</p>
+  <p>Each worktree only ever writes its own task journal, which is why three tasks can run side by side without their notes ever conflicting at merge time.</p>
+
+  <h3>Picking up where you left off</h3>
+  <p>Closed your laptop halfway through a build? Your agent restarted? Nothing is lost. The next morning:</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>your agent</span></div><span class="p">›</span> /kiln-resume 52
+  <span class="d">reading</span> tasks/52-limiter-store.md · branch kiln/52-limiter-store · no PR yet
+  <span class="k">✓</span> last finished step: kiln-build · 2 commits · 9 of 12 tests green
+  <span class="h">→</span> continuing kiln-build: the 3 failing tests in limiter.store.test.ts</pre>
+  </figure>
+  <p>Kiln trusts the journal over its own guesses. It rebuilds the todo list from the playbook, checks the journal against the branch, the PR and <code>kiln verdict</code>, and carries on from the first step that isn't done. Uncommitted work is kept, never thrown away to "start clean".</p>
+  <p class="why"><a href="cli.html">kiln status, field by field</a></p>
+</section>
+
+<!-- ── 10 ─────────────────────────────── -->
+<section class="chapter" id="solo">
+  <div class="eyebrow">Chapter 10</div>
+  <h2>Using skills on their own</h2>
+  <p class="lead"><code>/kiln</code> is the front door, and it's what you'll use most. But every step it chains together is also a skill you can call directly.</p>
+  <p>That's handy when you only want one piece of the routine. These are the ones people reach for most:</p>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>When you want to…</th><th>Run</th><th>Stage</th></tr></thead>
+      <tbody>
+        <tr><td>Write an idea down for later without starting on it</td><td><code>/kiln-issue "…"</code></td><td class="st c-gather">gather</td></tr>
+        <tr><td>Tidy the backlog: merge duplicates, fill in criteria, set sizes</td><td><code>/kiln-triage</code></td><td class="st c-gather">gather</td></tr>
+        <tr><td>Understand a piece of code without changing anything</td><td><code>/kiln-explore</code></td><td class="st c-shape">shape</td></tr>
+        <tr><td>Prove a branch you wrote yourself actually works</td><td><code>/kiln-verify</code></td><td class="st c-glaze">glaze</td></tr>
+        <tr><td>Get a second opinion on a branch you wrote yourself</td><td><code>/kiln-review</code></td><td class="st c-glaze">glaze</td></tr>
+        <tr><td>Rebuild or refresh how kiln runs your app</td><td><code>/kiln-verifier</code></td><td class="st c-glaze">glaze</td></tr>
+        <tr><td>Nudge a stuck PR to green</td><td><code>/kiln-watch</code></td><td class="st c-ship">ship</td></tr>
+        <tr><td>Ask whether a PR can merge, from any terminal</td><td><code>kiln ready 57</code></td><td class="st c-any">binary</td></tr>
+        <tr><td>See everything in flight and what's waiting on you</td><td><code>/kiln-status</code></td><td class="st c-any">any</td></tr>
+        <tr><td>Continue an interrupted task</td><td><code>/kiln-resume</code></td><td class="st c-any">any</td></tr>
+        <tr><td>Turn recent experience into lessons</td><td><code>/kiln-retro</code></td><td class="st c-temper">temper</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>One more trick: questions work too. Ask <code>/kiln "how does token refresh work?"</code> and the router picks the <strong>investigate</strong> playbook. It explores, writes you a report with file and line evidence, saves anything that should outlive the conversation as a decision record, and never touches the code or opens a PR.</p>
+  <div class="callout">
+    <b>Good to know</b>
+    <p>Action skills never fire by accident. Your agent only runs them when you call one, or when the router does as part of a playbook. Mentioning "review" in a sentence won't kick off a review.</p>
+  </div>
+  <p class="why"><a href="skills.html">The full skill catalog</a></p>
+</section>
+
+<!-- ── 11 ─────────────────────────────── -->
+<section class="chapter" id="learn">
+  <div class="eyebrow">Chapter 11</div>
+  <h2>Letting kiln learn</h2>
+  <p class="lead">Remember those "retro notes queued" lines? Every so often, kiln turns them into something useful.</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>your agent</span></div><span class="p">›</span> /kiln-retro
+  <span class="d">reading</span> 6 task journals since the last retro
+  <span class="k">✓</span> lessons  1 promoted to strong · 1 new candidate
+  <span class="k">✓</span> checks   tokens-only graduated from a strong lesson · green on main
+  <span class="k">✓</span> driver   current · nothing to maintain
+  <span class="k">✓</span> PR #60 📝 docs(kiln): retro after #42 to #49</pre>
+  </figure>
+  <p>The retro reads recent journals and looks for friction that keeps coming back: the same test failing for the same silly reason, the same file that's always forgotten, the same step that keeps getting skipped. Then it proposes changes, all in one PR:</p>
+  <div class="card">
+    <div class="card-head"><b>lessons.md</b> · PR #60</div>
+    <pre><span class="r">- [recurring] Run `pnpm test:e2e --update` after any token change.</span>
+<span class="k">+ [strong] Run `pnpm test:e2e --update` after any token</span>
+<span class="k">+   change; visual snapshots fail otherwise. (#31, #42, #49)</span>
+  [recurring] The `settings` API mock lives in test/fixtures,
+    not __mocks__. (#31, #42)
+<span class="k">+ [candidate] CI's Node 20 job is flaky on the websocket test.</span>
+<span class="k">+   Retry once before treating it as real. (#47)</span></pre>
+  </div>
+  <p>Each lesson carries a confidence level. A <strong>candidate</strong> has been seen once. A <strong>recurring</strong> one has shown up in two or three tasks. A <strong>strong</strong> one has earned its place as a rule, and kiln's planner, builder and reviewer treat it that way. The issue numbers at the end show where each one came from, so you can always check its reasoning.</p>
+  <p>You review this PR like any other. If a lesson is wrong, delete the line. Nothing about kiln's memory ever changes behind your back: only the retro writes lessons, it always goes through a pull request, and kiln waits for your yes before merging it, even on autopilot. Sometimes it'll propose a change to <code>PROJECT.md</code>, an edit to one of kiln's own skills, or turn a strong lesson into a standing check (that's the next chapter), and those land in the same PR.</p>
+  <p class="why"><a href="concepts.html">Lessons and who writes what</a></p>
+</section>
+
+<!-- ── 12 ─────────────────────────────── -->
+<section class="chapter" id="checks">
+  <div class="eyebrow">Chapter 12</div>
+  <h2>Teach kiln your own checks</h2>
+  <p class="lead">Every project has rules that live in somebody's head. "Migrations must roll back." "No raw hex colors." Kiln can hold those too.</p>
+  <p>They're called <strong>standing checks</strong>, and they live in one small file:</p>
+  <div class="card">
+    <div class="card-head"><b>checks.yaml</b> · .kiln/verify/</div>
+    <pre>- id: <span class="h">migrations-reversible</span>
+  when: { paths: ["db/migrations/**"] }
+  predicate: pnpm db:rollback &amp;&amp; pnpm db:migrate both exit 0
+  blocking: true
+  from: .github/workflows/ci.yml · job migrations
+
+- id: <span class="h">tokens-only</span>
+  when: { paths: ["src/**/*.css", "src/**/*.tsx"] }
+  predicate: pnpm lint:tokens exits 0
+  blocking: true
+  from: lessons.md · strong · #31 #42 #49</pre>
+  </div>
+  <p>Each check says which files it cares about (and, if you like, which issue labels) and what has to be true. Whenever a branch touches those files, the check joins that task's predicates, right next to the acceptance criteria, and gets proven the same way. A <code>blocking</code> check counts toward the overall verdict. Anything else is reported as advisory.</p>
+  <p>Working out which checks apply is a plain fact (which files changed?), so the binary does it, and you can ask it yourself:</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>terminal · kiln/65-invoices-table</span></div><span class="p">$</span> kiln checks
+<span class="d">3 files changed since origin/main · 2 of 2 standing checks apply</span>
+<b>migrations-reversible</b>  <span class="d">blocking</span>  pnpm db:rollback &amp;&amp; pnpm db:migrate both exit 0
+    <span class="d">matched db/migrations/0042_invoices.sql</span>
+<b>tokens-only</b>  <span class="d">blocking</span>  pnpm lint:tokens exits 0
+    <span class="d">matched src/features/invoices/Table.tsx, src/features/invoices/table.css</span></pre>
+  </figure>
+  <p>Proving them is judgment (does the rollback really leave the schema untouched?), so that part is <code>kiln-verify</code>'s job. Facts in code, judgment in skills. You'll notice that pattern everywhere in kiln.</p>
+
+  <h3>Where checks come from</h3>
+  <p>Onboarding seeds the path-scoped ones your CI already runs, like that migrations job (zero is fine too). You can add your own any time. And the retro graduates them: when a lesson reaches <strong>strong</strong> and it's something that can be checked, the retro PR proposes turning it into a standing check, after running it once to make sure it's green on main. See the <code>from:</code> line above. That one is the token lesson the retro promoted to strong back in chapter 11.</p>
+  <p>The difference matters. A lesson is something kiln remembers. A check is something kiln can't forget.</p>
+
+  <h3>Keeping the driver honest</h3>
+  <p>Your app keeps changing, and the driver from chapter 3 can slowly drift out of date. Each feature file lists the source files behind it, so the binary can count how many commits have touched them since the driver last changed:</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>terminal</span></div><span class="p">$</span> kiln doctor
+  <span class="k">✓</span> git repo app
+  <span class="k">✓</span> origin is git@github.com:acme/app.git
+  <span class="k">✓</span> gh authenticated as octocat
+  <span class="k">✓</span> 14 kiln labels present
+  <span class="k">✓</span> config valid · autonomy gated
+  <span class="k">✓</span> 21 skills, all match kiln.lock
+  <span class="k">✓</span> .claude/skills: 21 skills linked
+  <span class="k">✓</span> .agents/skills: 21 skills linked
+  <span class="k">✓</span> .cursor/skills: 21 skills linked
+  <span class="k">✓</span> worktrees go in ../app.kiln · 2 in use
+  <span class="h">!</span> driver is behind: 23 commits touched feature sources (export +6, settings +17)
+    <span class="d">fix: kiln-retro runs kiln-verifier maintain</span></pre>
+  </figure>
+  <p>When that happens, the next retro runs <code>kiln-verifier maintain</code>. It reads the code behind every feature, then drives every feature live, even the ones that look fine on paper. Anything that doesn't match gets sorted out: the map was wrong, the driver couldn't reach something, the app itself is broken, or a feature needs something kiln can't get (like a paid account). Fixes to the map ride along in the retro PR.</p>
+  <div class="callout heads">
+    <b>Heads up</b>
+    <p>Kiln only ever fixes the map, never your app. If a feature is actually broken, you get a bug issue with the commands and output it saw, and the driver stays as it was. Kiln never rewrites the map to match broken behavior.</p>
+  </div>
+  <p class="why"><a href="concepts.html">Verification, in full</a></p>
+</section>
+
+<!-- ── 13 ─────────────────────────────── -->
+<section class="chapter" id="release">
+  <div class="eyebrow">Chapter 13</div>
+  <h2>Cutting a release</h2>
+  <p class="lead">It's Friday, a bunch of good stuff has landed on main, and you'd like to ship it. Releases work a little differently from tasks, because they gather up many tasks at once.</p>
+  <p>Working out the next version is pure arithmetic over your commit history, so the binary does it. You can ask it any time. It's read-only, so nothing gets written, tagged or published:</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>terminal</span></div><span class="p">$</span> kiln release plan
+<span class="e">KILN release · v1.3.0 → v1.4.0</span>
+rule   ✨ feat in 2 PRs → minor
+since  v1.3.0 · 6 commits · 2 left out
+
+<span class="h">## [1.4.0] - 2026-10-30</span>
+
+<span class="h">### Added</span>
+
+- export history as csv (#51)
+- add dark mode to settings (#57)
+
+<span class="h">### Changed</span>
+
+- bump eslint to v10 (#59)
+
+<span class="h">### Fixed</span>
+
+- stop login loop after session expiry (#58)
+
+[1.4.0]: https://github.com/acme/app/compare/v1.3.0...v1.4.0</pre>
+    <figcaption>The two left out are the onboarding PR (🔧) and the retro PR (📝). Housekeeping never shows up in release notes.</figcaption>
+  </figure>
+  <p>It shows its reasoning on the <code>rule</code> line. Since every squash commit on main starts with a gitmoji, it can tell what kind of change each one was: a 💥 means major, a ✨ means minor, a 🐛 means patch, ⬆️ ♻️ and ⚡️ are patches under Changed, and housekeeping like 🔧, ✅ or 📝 is left out entirely. The biggest bump wins. If nothing releasable has merged since the last tag, or the tag already exists, it says so and exits 3.</p>
+  <p>The <code>/kiln-release</code> skill takes it from there:</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>your agent</span></div><span class="p">›</span> /kiln-release
+  <span class="k">✓</span> kiln release plan → v1.4.0 · ✨ feat in 2 PRs → minor
+  <span class="k">✓</span> CHANGELOG.md edited for readers
+
+<span class="h">## [1.4.0] - 2026-10-30</span>
+<span class="h">### Added</span>
+- dark mode in settings (#57)
+- export your history as CSV (#51)
+<span class="h">### Fixed</span>
+- login no longer loops after the session expires (#58)
+
+PR #61  kiln/release-v1.4.0  <span class="k">✓ CI green</span>
+<span class="d">publish</span>  release.yml runs on tags → watch it
+
+<span class="h">◆ merge #61, tag v1.4.0, publish?</span>  (yes / cancel)</pre>
+  </figure>
+  <p>The version is the binary's answer, and the skill only edits the wording of the notes so they read well for users. Notice the eslint bump is gone: nobody using your app can see it. Disagree with the number? Just say so. <code>/kiln-release 2.0.0</code> sets it yourself, and <code>/kiln-release --pre rc</code> gives you <code>1.4.0-rc.1</code> for a release candidate. Either way the skill passes it to <code>kiln release plan</code> rather than editing the number by hand.</p>
+  <p>Notice the changelog goes through a normal PR, #61, with CI and everything. It has no issue behind it, so <code>kiln ready</code> treats it as a housekeeping PR and CI is the only gate. Until you say yes at the gate, nothing is permanent. Closing that PR undoes the whole release. After you say yes, kiln merges with <code>kiln merge</code>, tags the merge commit, and publishes, either by watching your tag workflow or by creating the GitHub release itself.</p>
+  <div class="callout heads">
+    <b>Heads up</b>
+    <p>The release gate stops in every autonomy mode, autopilot included. Releasing is one of those things kiln always asks about.</p>
+    <p>And if a release goes out broken, the fix is v1.4.1. Kiln will never move or delete a tag that's already public, because someone may already have pulled it.</p>
+  </div>
+  <p>One last detail you might wonder about: why doesn't each PR add its own line to <code>CHANGELOG.md</code> as it merges? Because three tasks running side by side would all edit the same lines and conflict. The squash titles on main already hold the whole story, so kiln writes the changelog once, at release time.</p>
+  <p class="why"><a href="skills.html">The kiln-release skill, step by step</a></p>
+</section>
+
+<!-- ── 14 ─────────────────────────────── -->
+<section class="chapter" id="update">
+  <div class="eyebrow">Chapter 14</div>
+  <h2>Keeping kiln current</h2>
+  <p class="lead">Kiln's skills are files in your repo, which means they're yours. Edit them as much as you like. Updates are designed around that.</p>
+  <p>Upgrade the binary the same way you installed it, then preview what it would change:</p>
+  <figure>
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>terminal</span></div><span class="p">$</span> kiln update --dry-run
+<span class="d">dry run: nothing was written</span>
+  <span class="h">!</span> you edited .kiln/skills/kiln-review/SKILL.md · new version in .kiln/skills/kiln-review/SKILL.md.kiln-new
+  <span class="k">✓</span> replace  .kiln/skills/kiln-watch/SKILL.md
+  <span class="d">2 changes · kiln 0.2.0</span></pre>
+  </figure>
+  <p>Remember <code>kiln.lock</code> from the install? It holds a fingerprint of every skill file kiln wrote. When you update, any file that still matches its fingerprint is simply replaced with the new version. Any file you've changed is left exactly as it is, and the new version is written next to it as <code>SKILL.md.kiln-new</code> so you can merge the two at your own pace. Until you do, <code>kiln doctor</code> reminds you that it's there.</p>
+  <p>Update also links any new skills into your agents, unlinks ones kiln no longer ships, and refreshes the signpost block in <code>AGENTS.md</code> and <code>CLAUDE.md</code>. Your customizations never get silently overwritten, and you never miss an improvement either. Your <code>config.yaml</code> and the files in <code>.kiln/verify/</code> and <code>.kiln/memory/</code> are yours from day one, so updates don't touch them at all. Neither are your own skills, the ones that were in <code>.claude/skills/</code> before kiln arrived.</p>
+  <p class="why"><a href="cli.html">init, update and doctor</a></p>
+</section>
+
+<!-- ── 15 ─────────────────────────────── -->
+<section class="chapter" id="faq">
+  <div class="eyebrow">Chapter 15</div>
+  <h2>When things feel off</h2>
+  <p class="lead">A few questions that tend to come up in the first couple of weeks.</p>
+  <div class="faq">
+    <details>
+      <summary>Kiln stopped and I'm not sure why.</summary>
+      <div><p>Run <code>kiln status</code> or <code>/kiln-status</code>. Anything waiting on you shows up with a ◆ next to it. If the task isn't waiting on you, open its journal in <code>.kiln/memory/tasks/</code>: the last row says what kiln did most recently and how it went. A blocked issue will also have a comment on GitHub explaining what's in the way.</p></div>
+    </details>
+    <details>
+      <summary>What do kiln's exit codes mean?</summary>
+      <div><p>Every command uses the same four. <code>0</code> means ok, or yes. <code>1</code> means something failed underneath, like git or gh. <code>2</code> means the command was called wrong, like an unknown flag or a missing argument. <code>3</code> means the answer is no: the PR isn't ready, the verdict is stale, the label move isn't allowed, the merge was refused, doctor found a problem, or there's nothing to release.</p><p>Skills treat a 3 as an answer to follow, never something to work around. That's what makes <code>kiln ready</code> and <code>kiln merge</code> safe to hand to an agent.</p></div>
+    </details>
+    <details>
+      <summary>kiln-verify says INCONCLUSIVE. Is that bad?</summary>
+      <div><p>It's honest. It means kiln couldn't check that predicate, and the report says why and what would unblock it: a missing test account, a service it can't reach, a bug it couldn't reproduce on the old code. Fix the gap (often something <code>/kiln-verifier</code> can add to the driver) and run <code>/kiln-verify</code> again, or accept it at the merge gate if you know it's fine. Kiln only passes <code>--accept-inconclusive</code> after you say so, and autopilot never merges past it on its own.</p></div>
+    </details>
+    <details>
+      <summary>My app is a CLI (or an API). Does the driver still work?</summary>
+      <div><p>Yes. The driver describes whatever "using the app" means for your project: clicking through pages, calling endpoints with <code>curl</code>, or running commands and keeping their output and exit codes. Onboarding works out which one you have.</p></div>
+    </details>
+    <details>
+      <summary>Can I skip the plan just this once?</summary>
+      <div><p>For small work, sure. Tell kiln, and it records <code>skip: kiln-plan</code> with your words as the reason, in the todo list and the journal. Features can waive it at size S, and small bugs and most chores skip it on their own. Refactors never do, because the order of the steps is the whole safety story. And size L tasks always need a human at the plan, in every mode.</p></div>
+    </details>
+    <details>
+      <summary>CI failed on something that has nothing to do with my change.</summary>
+      <div><p><code>kiln-watch</code> sorts CI failures into real and flaky, and it retries a flaky job once. If it fails a second time, kiln treats it as real, moves the issue to <code>kiln:blocked</code> with the reason, and tells you. It also leaves a retro note, so if the same flaky test keeps showing up, the next retro will usually suggest a lesson about it.</p></div>
+    </details>
+    <details>
+      <summary>What if two tasks change the same file?</summary>
+      <div><p>They each build in their own worktree, so they don't interfere while they're working. Whichever one merges second will hit a conflict, and resolving conflicts is the very first thing <code>kiln-watch</code> does before looking at reviews or CI. A clean rebase keeps the verdict fresh (the change has the same <code>git patch-id</code>). If resolving the conflict changed the code, kiln verifies and reviews again. If it can't resolve something confidently, it asks you.</p></div>
+    </details>
+    <details>
+      <summary>I edited a skill and now <code>kiln update</code> left a .kiln-new file.</summary>
+      <div><p>That's working as intended. Compare the two, keep what you want in <code>SKILL.md</code>, then delete the <code>.kiln-new</code> file and <code>kiln doctor</code> stops reminding you. Kiln has already recorded the new version in <code>kiln.lock</code>, so from then on your file counts as your edit, and updates leave it alone until kiln ships another change to it.</p></div>
+    </details>
+    <details>
+      <summary>Do I need any other skill packs installed?</summary>
+      <div><p>No. Kiln ships its own version of everything inside the binary and never calls a skill or tool it didn't install. A fresh machine with just <code>kiln</code>, <code>git</code> and <code>gh</code> (plus your agent) is enough.</p></div>
+    </details>
+    <details>
+      <summary>Does this only work with Claude?</summary>
+      <div><p>No. The skills live once in <code>.kiln/skills/</code> and are linked into Claude Code, Codex and Cursor. Memory is plain files in git, so you can start a task in one agent and resume it in another. Kiln doesn't read any agent's private transcripts.</p></div>
+    </details>
+    <details>
+      <summary>I just want to see what's in the backlog.</summary>
+      <div><p><code>kiln status</code> shows the counts, and every kiln issue is a normal GitHub issue with normal labels. <code>gh issue list --label kiln:ready</code> works just as well, and so does the GitHub website.</p></div>
+    </details>
+  </div>
+
+  <h3>The cheat sheet</h3>
+  <div class="cheats">
+    <div class="cheat"><code>kiln init</code><span>install into this repo</span></div>
+    <div class="cheat"><code>kiln doctor</code><span>check that everything is wired up</span></div>
+    <div class="cheat"><code>/kiln-onboard</code><span>once, to teach kiln your project</span></div>
+    <div class="cheat"><code>/kiln "&lt;task&gt;"</code><span>do a whole task, issue to merge</span></div>
+    <div class="cheat"><code>kiln status</code><span>what's in flight, what needs you</span></div>
+    <div class="cheat"><code>kiln ready &lt;pr&gt;</code><span>can this PR merge, and if not, why</span></div>
+    <div class="cheat"><code>kiln verdict</code><span>do verify and review still hold for HEAD</span></div>
+    <div class="cheat"><code>kiln checks</code><span>which standing checks apply here</span></div>
+    <div class="cheat"><code>/kiln-verify</code><span>prove a branch actually works</span></div>
+    <div class="cheat"><code>/kiln-resume &lt;n&gt;</code><span>continue an interrupted task</span></div>
+    <div class="cheat"><code>/kiln-retro</code><span>turn experience into lessons</span></div>
+    <div class="cheat"><code>/kiln-release</code><span>ship what main already has</span></div>
+    <div class="cheat"><code>kiln update --dry-run</code><span>preview a skills upgrade</span></div>
+    <div class="cheat"><code>.kiln/config.yaml</code><span>autonomy, gates, conventions</span></div>
+  </div>
+
+  <div class="finale">
+    <p>That's your first week. One sentence in, a merged PR out, and a repo that remembers a little more each time.</p>
+    <small>Want to know why it works this way? <a href="concepts.html">Concepts</a> explains the ideas, <a href="skills.html">Skills</a> covers every skill, and the <a href="cli.html">CLI reference</a> lists every command and flag.</small>
+  </div>
+</section>
+
+  </main>
+</div>
+
+<footer class="site-foot"><div class="wrap">
+  <span><b>kiln</b> · MIT licensed · <a href="https://github.com/pavelsimo/kiln">github.com/pavelsimo/kiln</a></span>
+  <span>Fire it up: <code>kiln init</code></span>
+</div></footer>
+
+<script>
+(function () {
+  /* theme toggle, shared key across the docs site */
+  var root = document.documentElement, btn = document.getElementById('themeBtn'), lbl = document.getElementById('themeLbl');
+  function effective() {
+    var t = root.getAttribute('data-theme');
+    if (t) return t;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  function sync() { lbl.textContent = effective() === 'dark' ? 'Light' : 'Dark'; }
+  try { var saved = localStorage.getItem('kiln-theme'); if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved); } catch (e) {}
+  sync();
+  btn.addEventListener('click', function () {
+    var next = effective() === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('kiln-theme', next); } catch (e) {}
+    sync();
+  });
+
+  /* active chapter in the rail */
+  var links = {}, list = document.getElementById('railList');
+  Array.prototype.forEach.call(list.querySelectorAll('a'), function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  var current = null;
+  function activate(id) {
+    if (id === current || !links[id]) return;
+    if (current && links[current]) links[current].classList.remove('on');
+    links[id].classList.add('on');
+    current = id;
+    var a = links[id], ol = list;
+    if (ol.scrollWidth > ol.clientWidth) {
+      var left = a.offsetLeft - ol.clientWidth / 2 + a.offsetWidth / 2;
+      ol.scrollTo({ left: left, behavior: 'smooth' });
+    }
+  }
+  var chapters = Array.prototype.slice.call(document.querySelectorAll('section.chapter'));
+  if ('IntersectionObserver' in window) {
+    var visible = {};
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { visible[e.target.id] = e.isIntersecting; });
+      for (var i = 0; i < chapters.length; i++) { if (visible[chapters[i].id]) { activate(chapters[i].id); break; } }
+    }, { rootMargin: '-35% 0px -60% 0px' });
+    chapters.forEach(function (c) { io.observe(c); });
+  }
+
+  /* reading progress */
+  var bar = document.getElementById('progress');
+  function progress() {
+    var h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', progress, { passive: true });
+  progress();
+})();
+</script>
+</body>
+</html>

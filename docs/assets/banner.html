@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kiln banner</title>
+<!-- Source for banner.png. Render: chromium --headless --screenshot=banner.png --window-size=1280,420 --force-device-scale-factor=2 --hide-scrollbars --virtual-time-budget=8000 banner.html -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;600;900&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root { --bg: #14100d; --fg: #f4e9dd; --muted: #8c7d70; --shape: #e0503a; --fire: #ff6b2b; --glaze: #ffae42; }
+html, body { margin: 0; width: 1280px; height: 420px; overflow: hidden; background: var(--bg); }
+.b { position: relative; width: 1280px; height: 420px; box-sizing: border-box; padding: 54px 72px; display: flex; flex-direction: column; justify-content: center; }
+.b::before { content: ""; position: absolute; inset: -40% -10% -60% 30%; background: radial-gradient(closest-side, rgba(255,107,43,.20), rgba(255,107,43,.05) 55%, transparent 75%); }
+svg { position: absolute; right: 56px; top: 50px; width: 560px; height: 320px; }
+.word { position: relative; font: 900 230px/.78 "Big Shoulders Display", Impact, sans-serif; letter-spacing: -.005em; background: linear-gradient(98deg, var(--shape) 0%, var(--fire) 52%, var(--glaze) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; width: fit-content; padding-bottom: 6px; }
+.tag { position: relative; margin-top: 26px; font: 600 50px/1.02 "Big Shoulders Display", Impact, sans-serif; color: var(--fg); letter-spacing: .01em; }
+.meta { position: absolute; right: 72px; bottom: 40px; font: 500 15px/1 "IBM Plex Mono", monospace; color: var(--muted); letter-spacing: .08em; }
+.meta b { color: var(--glaze); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="b">
+  <!-- a firing schedule: climb, hold at cone 6, slow cool -->
+  <svg viewBox="0 0 560 320" aria-hidden="true">
+    <defs>
+      <linearGradient id="heat" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0" stop-color="#b48767"/><stop offset=".35" stop-color="#e0503a"/><stop offset=".6" stop-color="#ffae42"/><stop offset="1" stop-color="#8fabbb"/>
+      </linearGradient>
+    </defs>
+    <g stroke="#2b231c" stroke-width="1" fill="none">
+      <line x1="0" y1="290" x2="560" y2="290"/><line x1="0" y1="210" x2="560" y2="210"/><line x1="0" y1="130" x2="560" y2="130"/><line x1="0" y1="50" x2="560" y2="50"/>
+    </g>
+    <path d="M10 288 C 90 280, 120 200, 170 168 S 250 70, 300 56 L 380 56 C 430 60, 470 160, 550 270" fill="none" stroke="url(#heat)" stroke-width="3.5" stroke-linecap="round" opacity=".85"/>
+    <g fill="#ffae42"><circle cx="170" cy="168" r="5"/><circle cx="340" cy="56" r="5"/></g>
+    <g font-family="IBM Plex Mono, monospace" font-size="13" fill="#8c7d70" letter-spacing="1">
+      <text x="182" y="186">573°C · plan</text><text x="300" y="40">1222°C · cone 6</text>
+    </g>
+  </svg>
+  <div class="word">kiln</div>
+  <div class="tag">A software factory you<br>install into your repo.</div>
+  <div class="meta">issue → plan → build → <b>prove</b> → ship → learn</div>
+</div>
+</body>
+</html>

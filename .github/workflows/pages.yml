@@ -1,0 +1,59 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # The site is hand-written HTML, so there's nothing to compile. This step
+      # only keeps the house style: no em-dashes or en-dashes in the docs.
+      - name: Check docs style
+        run: |
+          if grep -rnP '\x{2014}|\x{2013}' docs --include='*.html'; then
+            echo "Docs use em-dashes or en-dashes; rewrite those sentences."
+            exit 1
+          fi
+
+      - name: Stage site
+        run: |
+          mkdir -p _site
+          cp -r docs/. _site/
+          touch _site/.nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

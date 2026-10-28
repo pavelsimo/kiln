@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kiln skills</title>
+<meta name="description" content="All 21 kiln skills with what each one reads, writes and runs, filterable by lifecycle stage, plus the step lists of the six playbooks.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='9' fill='%23ff6b2b'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: a parts catalog. A filterable card grid of skills, then the six playbooks as numbered step lists; each stage keeps its incandescence color. */
+:root {
+  /* dark first: the inside of a kiln */
+  --bg: #14100d;
+  --bg-2: #1a1511;
+  --surface: #201914;
+  --surface-2: #2a211a;
+  --line: #3d3128;
+  --line-soft: #2b231c;
+  --fg: #f4e9dd;
+  --fg-2: #cdbdad;
+  --muted: #9b8a7a;
+  --ember: #ff6b2b;
+  --amber: #ffae42;
+  --glow: rgba(255, 107, 43, .14);
+  --glow-2: rgba(255, 174, 66, .10);
+  /* stage colors = color temperature of hot clay */
+  --s-gather: #b48767;
+  --s-shape: #e0503a;
+  --s-fire: #ff6b2b;
+  --s-glaze: #ffae42;
+  --s-ship: #ffe1a1;
+  --s-temper: #8fabbb;
+  --ok: #7ccb9c;
+  --crit: #ff6a5c;
+  /* terminals stay dark in both themes */
+  --term-bg: #0f0c0a;
+  --term-fg: #f1e5d8;
+  --term-dim: #8c7d70;
+  --term-ok: #7ccb9c;
+  --term-hot: #ffae42;
+  --term-ember: #ff7a3d;
+  --font-display: "Big Shoulders Display", "Oswald", "Arial Narrow", Impact, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #ede5db; --bg-2: #e6ddd1; --surface: #f8f3ed; --surface-2: #efe7dd;
+    --line: #d4c6b6; --line-soft: #e0d5c8;
+    --fg: #23180f; --fg-2: #4c3b2e; --muted: #7b6757;
+    --ember: #c2410c; --amber: #a85b05;
+    --glow: rgba(194, 65, 12, .10); --glow-2: rgba(168, 91, 5, .08);
+    --s-gather: #8a5f43; --s-shape: #b3301c; --s-fire: #d4470e; --s-glaze: #b26a00; --s-ship: #8c6a12; --s-temper: #4a6b7d;
+    --ok: #2f7d50; --crit: #c0352a;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #ede5db; --bg-2: #e6ddd1; --surface: #f8f3ed; --surface-2: #efe7dd;
+  --line: #d4c6b6; --line-soft: #e0d5c8;
+  --fg: #23180f; --fg-2: #4c3b2e; --muted: #7b6757;
+  --ember: #c2410c; --amber: #a85b05;
+  --glow: rgba(194, 65, 12, .10); --glow-2: rgba(168, 91, 5, .08);
+  --s-gather: #8a5f43; --s-shape: #b3301c; --s-fire: #d4470e; --s-glaze: #b26a00; --s-ship: #8c6a12; --s-temper: #4a6b7d;
+  --ok: #2f7d50; --crit: #c0352a;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 76px; -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 16px/1.62 var(--font-body); -webkit-font-smoothing: antialiased; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+a { color: var(--ember); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; border-radius: 4px; }
+code, kbd { font-family: var(--font-mono); font-size: .88em; }
+p code, li code, dd code {
+  background: var(--surface-2); border: 1px solid var(--line-soft);
+  padding: .08em .38em; border-radius: 5px; color: var(--fg); white-space: nowrap;
+}
+.wrap { max-width: 1120px; margin-inline: auto; padding-inline: 24px; }
+@media (max-width: 600px) { .wrap { padding-inline: 16px; } }
+
+/* ── shared site header ─────────────────── */
+.top { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line-soft); }
+.top .wrap { display: flex; align-items: center; gap: 14px; height: 58px; }
+.brand { display: flex; align-items: baseline; text-decoration: none; color: var(--fg); flex: none; }
+.brand b { font: 800 26px/1 var(--font-display); letter-spacing: .02em; background: linear-gradient(100deg, var(--s-shape), var(--ember) 45%, var(--amber)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+nav.site { display: flex; gap: 2px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+nav.site::-webkit-scrollbar { display: none; }
+nav.site a { flex: none; font: 500 12px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-decoration: none; padding: 9px 10px; border-radius: 7px; }
+nav.site a:hover { color: var(--fg); background: var(--surface-2); }
+nav.site a[aria-current="page"] { color: var(--ember); background: var(--glow); }
+.theme-btn {
+  flex: none; display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface); color: var(--fg-2); border: 1px solid var(--line);
+  font: 500 12px/1 var(--font-mono); padding: 8px 11px; border-radius: 999px; cursor: pointer;
+}
+.theme-btn:hover { color: var(--fg); border-color: var(--muted); }
+.theme-btn i { width: 10px; height: 10px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 10px var(--ember); }
+
+/* ── type ───────────────────────────────── */
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h2 { font: 800 clamp(38px, 5.4vw, 64px)/.95 var(--font-display); letter-spacing: .005em; }
+h3 { font: 700 26px/1.05 var(--font-display); letter-spacing: .01em; }
+.eyebrow {
+  display: flex; align-items: center; gap: 10px;
+  font: 500 12px/1 var(--font-mono); text-transform: uppercase; letter-spacing: .16em; color: var(--ember);
+  margin-bottom: 16px;
+}
+.eyebrow::before { content: ""; width: 26px; height: 1px; background: currentColor; }
+.lede { font-size: 18px; color: var(--fg-2); max-width: 66ch; margin: 18px 0 0; }
+.lede code { white-space: normal; overflow-wrap: anywhere; }
+.block-head > * { min-width: 0; }
+.cap { margin: 22px 2px 0; font-size: 14.5px; color: var(--muted); max-width: 80ch; }
+section.block { padding-block: 84px; border-top: 1px solid var(--line-soft); }
+.block-head { display: grid; gap: 0; margin-bottom: 36px; }
+@media (max-width: 700px) { section.block { padding-block: 60px; } }
+
+/* ── hero ───────────────────────────────── */
+.hero { position: relative; overflow: hidden; padding-block: 60px 72px; }
+.hero::before {
+  content: ""; position: absolute; inset: -30% -10% auto 35%; height: 120%;
+  background:
+    radial-gradient(closest-side, var(--glow), transparent 70%),
+    radial-gradient(closest-side at 70% 60%, var(--glow-2), transparent 75%);
+  pointer-events: none;
+}
+.hero .wrap { position: relative; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 48px; align-items: center; }
+@media (max-width: 920px) { .hero .wrap { grid-template-columns: minmax(0, 1fr); gap: 32px; } }
+.meta-line { font: 500 12px/1.4 var(--font-mono); color: var(--muted); letter-spacing: .06em; text-transform: uppercase; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.meta-line b { color: var(--fg-2); font-weight: 500; }
+.title {
+  font: 900 clamp(50px, 6.8vw, 88px)/.88 var(--font-display); letter-spacing: -.005em; margin: 20px 0 18px; max-width: 15ch;
+  color: var(--ember);
+  background: linear-gradient(100deg, var(--s-shape) 0%, var(--s-fire) 32%, var(--s-glaze) 64%, var(--s-ship) 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.pitch { color: var(--fg-2); max-width: 58ch; margin: 0; font-size: 17px; }
+.jump { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 0; }
+.jump a { font: 500 13px/1 var(--font-mono); color: var(--fg); text-decoration: none; padding: 10px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
+.jump a:hover { border-color: var(--ember); color: var(--ember); }
+
+.term {
+  background: var(--term-bg); color: var(--term-fg);
+  border: 1px solid var(--line); border-radius: 12px;
+  font: 400 13px/1.7 var(--font-mono); padding: 16px 18px;
+  overflow-x: auto; white-space: pre; margin: 0; tab-size: 2; min-width: 0;
+}
+.term .d { color: var(--term-dim); }
+.term .k { color: var(--term-ok); }
+.term .h { color: var(--term-hot); }
+.term .e { color: var(--term-ember); }
+.term-bar { display: flex; gap: 6px; margin-bottom: 10px; }
+.term-bar i { width: 9px; height: 9px; border-radius: 50%; background: #3a2f27; }
+
+.c-gather { --c: var(--s-gather); } .c-shape { --c: var(--s-shape); } .c-fire { --c: var(--s-fire); }
+.c-glaze { --c: var(--s-glaze); } .c-ship { --c: var(--s-ship); } .c-temper { --c: var(--s-temper); } .c-any { --c: var(--fg-2); }
+
+/* ── how skills work: a two-column ledger ─ */
+.principles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 48px; }
+@media (max-width: 760px) { .principles { grid-template-columns: minmax(0, 1fr); } }
+.principle { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 16px; padding: 20px 0; border-top: 1px solid var(--line-soft); }
+.principle .src { font: 500 11px/1.5 var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--ember); padding-top: 4px; }
+.principle h4 { margin: 0 0 4px; font: 600 17px/1.3 var(--font-body); }
+.principle p { margin: 0; color: var(--fg-2); font-size: 15px; }
+@media (max-width: 480px) { .principle { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+
+/* ── skill catalog ──────────────────────── */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.fbtn {
+  font: 500 13px/1 var(--font-mono); padding: 9px 13px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--fg-2);
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.fbtn i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.fbtn:hover { color: var(--fg); border-color: var(--muted); }
+.fbtn[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.fbtn .n { opacity: .6; font-variant-numeric: tabular-nums; }
+.skills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1000px) { .skills { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .skills { grid-template-columns: minmax(0, 1fr); } }
+.skill { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 10px; min-width: 0; scroll-margin-top: 76px; }
+.skill-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.skill-name { font: 600 15px/1.35 var(--font-mono); color: var(--fg); overflow-wrap: anywhere; min-width: 0; }
+.badges { display: inline-flex; align-items: center; gap: 8px; flex: none; padding-top: 2px; }
+.tag { font: 500 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--c); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.gate-chip { font: 600 11px/1 var(--font-mono); color: var(--amber); border: 1px solid var(--amber); border-radius: 999px; padding: 4px 7px; white-space: nowrap; }
+.skill p { margin: 0; color: var(--fg-2); font-size: 14.5px; }
+.skill p code { white-space: normal; }
+.skill dl { margin: auto 0 0; display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 6px 10px; font-size: 12.5px; border-top: 1px dashed var(--line); padding-top: 12px; }
+.skill dt { font: 500 10.5px/1.7 var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.skill dd { margin: 0; font-family: var(--font-mono); color: var(--fg-2); overflow-wrap: anywhere; line-height: 1.6; }
+.skill.router { grid-column: 1 / -1; border-color: var(--ember); background: linear-gradient(160deg, var(--glow), transparent 60%), var(--surface); }
+.skill.router p { max-width: 90ch; }
+
+/* ── playbooks ──────────────────────────── */
+.legend-row { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin-bottom: 18px; font: 500 12px/1.3 var(--font-mono); color: var(--muted); }
+.pbks { columns: 2 440px; column-gap: 16px; }
+.pbk { break-inside: avoid; display: flex; flex-direction: column; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin: 0 0 16px; min-width: 0; scroll-margin-top: 76px; }
+.pbk header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.pbk h3 { font-size: 30px; font-weight: 800; }
+.pbk .for { font: 500 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.pbk .desc { margin: 0; color: var(--fg-2); font-size: 14.5px; }
+.strip { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.m { display: inline-flex; align-items: center; gap: 5px; font: 500 10.5px/1 var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--fg-2); min-width: 0; }
+.strip .m { justify-content: center; padding: 6px 2px; border-radius: 6px; background: var(--surface-2); overflow: hidden; }
+.m i { flex: none; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--c); background: var(--c); }
+.m.light i { background: linear-gradient(90deg, var(--c) 50%, transparent 50%); }
+.m.skip { color: var(--muted); }
+.m.skip i { background: transparent; border-color: var(--muted); }
+@media (max-width: 480px) { .strip .m { font-size: 0; gap: 0; } .strip .m i { width: 10px; height: 10px; } }
+.pbk ol { margin: 0; padding: 0 0 0 2.4em; font: 400 12.8px/1.55 var(--font-mono); color: var(--fg); display: grid; gap: 3px; }
+.pbk ol li { padding-left: 4px; overflow-wrap: anywhere; }
+.pbk ol li::marker { color: var(--muted); font-variant-numeric: tabular-nums; }
+.pbk ol li.gate { color: var(--amber); }
+.pbk ol li.skip { color: var(--muted); }
+.pbk .note { margin: 0; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 13.5px; color: var(--muted); }
+
+/* ── shared site footer ─────────────────── */
+.site-foot { border-top: 1px solid var(--line-soft); padding-block: 28px; color: var(--muted); font: 400 12px/1.6 var(--font-mono); }
+.site-foot .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; }
+.site-foot b { color: var(--fg-2); font-weight: 600; }
+.site-foot a { color: var(--fg-2); }
+.site-foot a:hover { color: var(--ember); }
+.site-foot code { color: var(--amber); font-size: 1em; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><b>kiln</b></a>
+    <nav class="site" aria-label="Docs">
+      <a href="getting-started.html">Get started</a>
+      <a href="tutorial.html">Tutorial</a>
+      <a href="concepts.html">Concepts</a>
+      <a href="skills.html" aria-current="page">Skills</a>
+      <a href="cli.html">CLI</a>
+      <a href="https://github.com/pavelsimo/kiln">GitHub</a>
+    </nav>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle color theme"><i></i><span id="themeLbl">Light</span></button>
+  </div>
+</header>
+
+<main>
+
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <div class="meta-line"><span><b>Skills</b></span><span>21 skills</span><span>6 playbooks</span></div>
+      <h1 class="title">Twenty&#8209;one skills, one router</h1>
+      <p class="pitch">A skill is a folder with a <code>SKILL.md</code> that your coding agent reads and follows. <code>/kiln</code> is the router that chains them; every other skill is one step of the lifecycle that you can also run by hand. Type the <code>/kiln-*</code> commands inside your agent (Claude Code, Codex, Cursor). Plain <code>kiln …</code> commands run in a terminal.</p>
+      <p class="jump"><a href="#catalog">Catalog</a><a href="#playbooks">Playbooks</a><a href="concepts.html#lifecycle">The lifecycle</a></p>
+    </div>
+<pre class="term" aria-label="Where skills live and how you call them"><span class="term-bar"><i></i><i></i><i></i></span><span class="d">.kiln/skills/</span>
+├── <span class="h">kiln/</span>SKILL.md          <span class="d"># the router</span>
+│   └── playbooks/*.md
+├── kiln-issue/SKILL.md
+└── … 19 more
+<span class="d">.claude/skills/kiln-issue</span>
+  <span class="k">→</span> ../../.kiln/skills/kiln-issue
+
+<span class="e">›</span> /kiln "add dark mode to settings"
+  <span class="d"># the router picks a playbook and chains skills</span>
+<span class="e">›</span> /kiln-issue "export history as CSV"
+  <span class="d"># one skill, on its own</span>
+<span class="d">$</span> kiln update
+  <span class="k">✓</span> already up to date · 21 skills</pre>
+  </div>
+</section>
+
+<section class="block" id="how">
+  <div class="wrap">
+    <div class="block-head">
+      <div class="eyebrow">How skills work</div>
+      <h2>Plain files your agent follows</h2>
+    </div>
+    <div class="principles">
+      <div class="principle"><div class="src">router</div><div><h4>The router chains them</h4><p><code>/kiln</code> restates your goal, sizes the task and picks a playbook. It copies the playbook's steps into your todo list, then for each step reads <code>.kiln/skills/&lt;name&gt;/SKILL.md</code> and follows it exactly. That file is the instruction, so a skill behaves the same whoever calls it.</p></div></div>
+      <div class="principle"><div class="src">on its own</div><div><h4>Every skill also works alone</h4><p>Type <code>/kiln-issue</code> to write an idea down, <code>/kiln-verify</code> to prove any branch, or <code>/kiln-release</code> to ship. Action skills only run when you or the router call them by name. They never trigger by accident.</p></div></div>
+      <div class="principle"><div class="src">one copy</div><div><h4>One folder, every agent</h4><p>Skills live in <code>.kiln/skills/</code>. <code>kiln init</code> symlinks each skill folder into <code>.claude/skills</code>, <code>.agents/skills</code> and <code>.cursor/skills</code>, so Claude Code, Codex and Cursor all read the same files. Your own skills sit beside them untouched.</p></div></div>
+      <div class="principle"><div class="src">yours</div><div><h4>Your edits survive updates</h4><p>Skills are Markdown you can change. <code>kiln update</code> replaces a file only when its hash still matches <code>kiln.lock</code>. A file you edited is kept, and the new version lands next to it as <code>SKILL.md.kiln-new</code> for you to merge. <code>kiln doctor</code> lists any you haven't merged yet.</p></div></div>
+    </div>
+    <p class="cap">Skills never re-derive facts. They ask the binary (<code>kiln status</code>, <code>checks</code>, <code>verdict</code>, <code>ready</code>, <code>release plan</code>, all with <code>--json</code>), change <code>kiln:*</code> labels only through <code>kiln move</code>, and merge only through <code>kiln merge</code>. See <a href="concepts.html#boundary">facts in code, judgment in skills</a>.</p>
+  </div>
+</section>
+
+<section class="block" id="catalog">
+  <div class="wrap">
+    <div class="block-head">
+      <div class="eyebrow">Catalog</div>
+      <h2>Every skill, by stage</h2>
+      <p class="lede">Each card shows the command you type, the stage it belongs to, what it reads, what it writes, and the key commands it runs. Filter by stage to see what supports each part of the lifecycle. ◆ marks the skill that holds a gate.</p>
+    </div>
+    <div class="filters" id="filters" role="toolbar" aria-label="Filter skills by stage">
+      <button type="button" class="fbtn c-any" id="f-all" data-stage="all" aria-pressed="true">All <span class="n">21</span></button>
+      <button type="button" class="fbtn c-any" id="f-any" data-stage="any" aria-pressed="false"><i></i>Across stages <span class="n">4</span></button>
+      <button type="button" class="fbtn c-gather" id="f-gather" data-stage="gather" aria-pressed="false"><i></i>Gather <span class="n">2</span></button>
+      <button type="button" class="fbtn c-shape" id="f-shape" data-stage="shape" aria-pressed="false"><i></i>Shape <span class="n">3</span></button>
+      <button type="button" class="fbtn c-fire" id="f-fire" data-stage="fire" aria-pressed="false"><i></i>Fire <span class="n">3</span></button>
+      <button type="button" class="fbtn c-glaze" id="f-glaze" data-stage="glaze" aria-pressed="false"><i></i>Glaze <span class="n">3</span></button>
+      <button type="button" class="fbtn c-ship" id="f-ship" data-stage="ship" aria-pressed="false"><i></i>Ship <span class="n">4</span></button>
+      <button type="button" class="fbtn c-temper" id="f-temper" data-stage="temper" aria-pressed="false"><i></i>Temper <span class="n">2</span></button>
+    </div>
+    <div class="skills" id="skillGrid">
+      <article class="skill c-any router" data-stage="any" id="kiln">
+        <div class="skill-top"><code class="skill-name">/kiln "&lt;task&gt;"</code><span class="badges"><span class="tag">across</span></span></div>
+        <p>The router and the single entry point. Restates your goal in one sentence, classifies the type and size, picks a playbook, copies its steps into your todo list word for word, and chains the <code>kiln-*</code> skills while respecting autonomy and gates. Give it an issue number (<code>/kiln #42</code>) to work an existing issue, or nothing at all to see what needs attention.</p>
+        <dl><dt>reads</dt><dd>.kiln/config.yaml · PROJECT.md · lessons.md · playbooks/&lt;playbook&gt;.md · kiln status --json</dd><dt>writes</dt><dd>the todo list in your agent · journal rows go through kiln-log</dd><dt>runs</dt><dd>kiln status --json · gh issue view &lt;n&gt; · gh issue edit (size and type labels only)</dd></dl>
+      </article>
+      <article class="skill c-any" data-stage="any" id="kiln-onboard">
+        <div class="skill-top"><code class="skill-name">/kiln-onboard</code><span class="badges"><span class="tag">across</span></span></div>
+        <p>Run once after <code>kiln init</code>. Detects your stack and the real test, lint, typecheck, build and e2e commands from manifests and CI, runs each one once, writes PROJECT.md, wires kiln's CI workflow, seeds standing checks, builds the app driver through kiln-verifier, and opens it all as one PR.</p>
+        <dl><dt>reads</dt><dd>manifests and lockfiles · .github/workflows/*.yml · CONTRIBUTING.md · .kiln/kiln.lock</dd><dt>writes</dt><dd>PROJECT.md · verify/checks.yaml (seed) · ci.yml placeholder step · one PR on kiln/onboard</dd><dt>runs</dt><dd>kiln doctor · gh repo view · git switch -c kiln/onboard · gh pr create</dd></dl>
+      </article>
+      <article class="skill c-any" data-stage="any" id="kiln-status">
+        <div class="skill-top"><code class="skill-name">/kiln-status</code><span class="badges"><span class="tag">across</span></span></div>
+        <p>Shows the factory floor: tasks in flight, the backlog and the retro queue, straight from <code>kiln status --json</code>. Adds one suggestion for each item waiting on you. Strictly read-only, from any checkout.</p>
+        <dl><dt>reads</dt><dd>kiln status --json</dd><dt>writes</dt><dd>nothing</dd><dt>runs</dt><dd>kiln status --json</dd></dl>
+      </article>
+      <article class="skill c-any" data-stage="any" id="kiln-resume">
+        <div class="skill-top"><code class="skill-name">/kiln-resume &lt;n&gt;</code><span class="badges"><span class="tag">across</span></span></div>
+        <p>Picks up a task after a crash, a closed laptop or a switch to another agent. Rebuilds the todo list from the playbook and the task journal, checks it against git and GitHub, and continues from the first step that isn't done. Never throws away uncommitted work.</p>
+        <dl><dt>reads</dt><dd>kiln status --json · tasks/&lt;n&gt;-&lt;slug&gt;.md · playbooks/&lt;playbook&gt;.md · .kiln/config.yaml</dd><dt>writes</dt><dd>nothing directly; the resumed skill writes its own outputs</dd><dt>runs</dt><dd>git worktree add · git log · kiln verdict &lt;n&gt; --json · gh pr view</dd></dl>
+      </article>
+      <article class="skill c-gather" data-stage="gather" id="kiln-issue">
+        <div class="skill-top"><code class="skill-name">/kiln-issue</code><span class="badges"><span class="tag">Gather</span></span></div>
+        <p>Turns a rough request into a GitHub issue: a gitmoji title, the problem, acceptance criteria <code>P1..Pn</code> with at least one <code>must not change:</code>, what's out of scope, and type and size labels. Asks up to five questions in one batch when the request is vague. Never invents criteria.</p>
+        <dl><dt>reads</dt><dd>PROJECT.md · lessons.md · ISSUE_TEMPLATE/kiln-task.yml · open issues</dd><dt>writes</dt><dd>one issue at kiln:ready, or kiln:needs-triage when criteria are missing</dd><dt>runs</dt><dd>gh issue list --search · gh issue create --label · gh issue view</dd></dl>
+      </article>
+      <article class="skill c-gather" data-stage="gather" id="kiln-triage">
+        <div class="skill-top"><code class="skill-name">/kiln-triage</code><span class="badges"><span class="tag">Gather</span></span></div>
+        <p>Sweeps issues labeled <code>kiln:needs-triage</code>. Closes duplicates, fills in missing acceptance criteria or asks for them, sets type and size, promotes finished issues, and orders the ready queue by priority. Shows its plan as one table before writing anything.</p>
+        <dl><dt>reads</dt><dd>kiln:needs-triage and kiln:ready issues · recently closed issues · PROJECT.md · lessons.md</dd><dt>writes</dt><dd>titles, bodies, comments · type:* and size:* labels · closed duplicates</dd><dt>runs</dt><dd>gh issue list · gh issue edit · gh issue close · kiln move &lt;n&gt; ready</dd></dl>
+      </article>
+      <article class="skill c-shape" data-stage="shape" id="kiln-recall">
+        <div class="skill-top"><code class="skill-name">/kiln-recall</code><span class="badges"><span class="tag">Shape</span></span></div>
+        <p>Rebuilds context before work. Searches lessons, decisions and past task journals (including journals in other in-flight worktrees) for the area, checks the live state of everything it cites on GitHub, and flags stale notes. Ends with a short brief.</p>
+        <dl><dt>reads</dt><dd>lessons.md · decisions/ · tasks/ · in-flight journals in ../&lt;repo&gt;.kiln/ · GitHub</dd><dt>writes</dt><dd>a brief in the conversation, no files</dd><dt>runs</dt><dd>grep -rniE · gh issue view · gh pr view · git log -1</dd></dl>
+      </article>
+      <article class="skill c-shape" data-stage="shape" id="kiln-explore">
+        <div class="skill-top"><code class="skill-name">/kiln-explore</code><span class="badges"><span class="tag">Shape</span></span></div>
+        <p>Builds a read-only map of the code a task will touch: where things live, how they connect, which tests cover them, and the gotchas. Every claim gets a <code>file:line</code>. For size L it splits the area across 2 to 4 parallel read-only subagents.</p>
+        <dl><dt>reads</dt><dd>the issue · the recall brief · PROJECT.md · the source tree</dd><dt>writes</dt><dd>a map in the conversation, no files</dd><dt>runs</dt><dd>git ls-files · git grep -n · git log --oneline --follow</dd></dl>
+      </article>
+      <article class="skill c-shape" data-stage="shape" id="kiln-plan">
+        <div class="skill-top"><code class="skill-name">/kiln-plan</code><span class="badges"><span class="gate-chip">◆1</span><span class="tag">Shape</span></span></div>
+        <p>Posts the plan as an issue comment: approach, files, test plan, risks, and the predicates restated word for word. Splits L work into sub-issues, moves the issue to <code>kiln:planned</code>, and holds gate ◆1. A revision is a new comment, so the history stays visible.</p>
+        <dl><dt>reads</dt><dd>the issue · recall and explore output · decisions/ · lessons.md · .kiln/config.yaml · verify/DRIVER.md</dd><dt>writes</dt><dd>plan comment · sub-issues for L · kiln:planned · at most one decision record, after kiln-start</dd><dt>runs</dt><dd>gh issue comment --body-file · kiln move &lt;n&gt; planned</dd></dl>
+      </article>
+      <article class="skill c-fire" data-stage="fire" id="kiln-start">
+        <div class="skill-top"><code class="skill-name">/kiln-start</code><span class="badges"><span class="tag">Fire</span></span></div>
+        <p>Claims the issue. Checks <code>max_in_flight</code>, creates a worktree and a <code>kiln/&lt;n&gt;-&lt;slug&gt;</code> branch from a freshly fetched default branch, assigns you, moves the issue to <code>kiln:in-progress</code>, and creates the task journal through kiln-log.</p>
+        <dl><dt>reads</dt><dd>kiln status --json · .kiln/config.yaml · PROJECT.md</dd><dt>writes</dt><dd>worktree ../&lt;repo&gt;.kiln/&lt;n&gt;-&lt;slug&gt; · branch kiln/&lt;n&gt;-&lt;slug&gt; · assignee · kiln:in-progress</dd><dt>runs</dt><dd>git fetch origin --prune · git worktree add -b · gh issue edit --add-assignee @me · kiln move &lt;n&gt; in-progress</dd></dl>
+      </article>
+      <article class="skill c-fire" data-stage="fire" id="kiln-build">
+        <div class="skill-top"><code class="skill-name">/kiln-build</code><span class="badges"><span class="tag">Fire</span></span></div>
+        <p>Implements the plan test-first inside the worktree, one predicate at a time: red, green, clean, commit. A bug fix commits its failing reproduction before the fix, and a refactor pins behavior with characterization tests first. Finishes with test, lint, typecheck and build all green.</p>
+        <dl><dt>reads</dt><dd>the predicates and plan · PROJECT.md · lessons.md · the task journal</dd><dt>writes</dt><dd>code and tests, committed through kiln-commit · optional decision records</dd><dt>runs</dt><dd>PROJECT.md's test, lint, typecheck and build commands</dd></dl>
+      </article>
+      <article class="skill c-fire" data-stage="fire" id="kiln-commit">
+        <div class="skill-top"><code class="skill-name">/kiln-commit</code><span class="badges"><span class="tag">Fire</span></span></div>
+        <p>Makes atomic commits such as <code>✨ feat: add theme toggle to settings</code>, staging explicit paths only. Reorders the branch into small logical commits once, before verify, keeping the reproduction before the fix. Never adds <code>Co-authored-by</code> trailers or AI attribution.</p>
+        <dl><dt>reads</dt><dd>git status · git diff · git log origin/&lt;default&gt;..HEAD</dd><dt>writes</dt><dd>commits on kiln/&lt;n&gt;-&lt;slug&gt;</dd><dt>runs</dt><dd>git add &lt;paths&gt; · git commit · git rebase -i --autosquash</dd></dl>
+      </article>
+      <article class="skill c-glaze" data-stage="glaze" id="kiln-verify">
+        <div class="skill-top"><code class="skill-name">/kiln-verify</code><span class="badges"><span class="tag">Glaze</span></span></div>
+        <p>Proves the change on the real surface. Turns the acceptance criteria and matching standing checks into predicates, picks the check that fits each surface, drives the running app through DRIVER.md when needed, and audits every test it cites. Each predicate gets VERIFIED, NOT VERIFIED or INCONCLUSIVE with an evidence-ladder step, tied to a commit SHA. M uses a fresh-context checker, L a three-lane swarm.</p>
+        <dl><dt>reads</dt><dd>the predicates · kiln checks --json · git diff origin/&lt;default&gt;...HEAD · verify/DRIVER.md · verify/features/</dd><dt>writes</dt><dd>report and row through kiln-log · evidence/&lt;issue&gt;/ (gitignored)</dd><dt>runs</dt><dd>kiln checks --json --labels · project gates · driver steps · git worktree add --detach (bugs) · kiln verdict &lt;n&gt; --only verify --json</dd></dl>
+      </article>
+      <article class="skill c-glaze" data-stage="glaze" id="kiln-verifier">
+        <div class="skill-top"><code class="skill-name">/kiln-verifier create · maintain</code><span class="badges"><span class="tag">Glaze</span></span></div>
+        <p>Builds and maintains the app driver. <code>create</code> learns how to launch, health-check, drive and clean up your app, writes DRIVER.md and 3 to 5 feature files, and proves them with one full run. <code>maintain</code> checks every feature against the source and the live app, fixes only the map, files product gaps as issues, and ships at most one PR.</p>
+        <dl><dt>reads</dt><dd>PROJECT.md · .kiln/config.yaml · run scripts, routes, CLI commands, seeds · kiln doctor</dd><dt>writes</dt><dd>verify/DRIVER.md · verify/features/*.md · issues for product gaps</dd><dt>runs</dt><dd>git log --since=90.days · git ls-files · gh issue create · kiln move &lt;n&gt; needs-triage</dd></dl>
+      </article>
+      <article class="skill c-glaze" data-stage="glaze" id="kiln-review">
+        <div class="skill-top"><code class="skill-name">/kiln-review</code><span class="badges"><span class="tag">Glaze</span></span></div>
+        <p>Reviews the branch at a depth set by its size: S a self-review checklist, M a fresh-context reviewer subagent, L three adversarial reviewers whose findings count only when a reproducing command reruns. Returns PASS or FIX for the exact HEAD SHA, and never changes code.</p>
+        <dl><dt>reads</dt><dd>the issue · git diff origin/&lt;default&gt;...HEAD · PROJECT.md · lessons.md · kiln verdict &lt;n&gt; --json</dd><dt>writes</dt><dd>review report · row through kiln-log · on FIX: kiln move &lt;n&gt; in-progress</dd><dt>runs</dt><dd>git rev-parse --short=7 HEAD · git diff · kiln verdict &lt;n&gt; --json</dd></dl>
+      </article>
+      <article class="skill c-ship" data-stage="ship" id="kiln-pr">
+        <div class="skill-top"><code class="skill-name">/kiln-pr</code><span class="badges"><span class="tag">Ship</span></span></div>
+        <p>Confirms that verify and review are fresh for HEAD, pushes the branch, and opens a ready PR (never a draft) with a gitmoji title and the template sections, ending in <code>Closes #N</code>. Then moves the issue to <code>kiln:review</code>.</p>
+        <dl><dt>reads</dt><dd>kiln verdict &lt;n&gt; --json · the task journal · pull_request_template.md</dd><dt>writes</dt><dd>pushed branch · one ready PR · kiln:review</dd><dt>runs</dt><dd>git push -u origin · gh pr create · gh pr view · kiln move &lt;n&gt; review</dd></dl>
+      </article>
+      <article class="skill c-ship" data-stage="ship" id="kiln-watch">
+        <div class="skill-top"><code class="skill-name">/kiln-watch</code><span class="badges"><span class="tag">Ship</span></span></div>
+        <p>Takes an open PR to green. Asks <code>kiln ready</code> what's left, then handles conflicts, review threads and CI, in that order. Retries a flaky job once; if CI stays red, it blocks the issue with the reason. Never merges.</p>
+        <dl><dt>reads</dt><dd>kiln ready &lt;pr&gt; --json · kiln verdict &lt;n&gt; --json · review threads · CI logs · lessons.md</dd><dt>writes</dt><dd>fix commits · thread replies · one retry per flaky job</dd><dt>runs</dt><dd>kiln ready &lt;pr&gt; --json · git rebase · gh api graphql · gh run view --log-failed · gh run rerun --failed</dd></dl>
+      </article>
+      <article class="skill c-ship" data-stage="ship" id="kiln-merge">
+        <div class="skill-top"><code class="skill-name">/kiln-merge &lt;pr&gt;</code><span class="badges"><span class="gate-chip">◆2</span><span class="tag">Ship</span></span></div>
+        <p>Holds gate ◆2. Shows what <code>kiln ready</code> reports, waits for your yes according to autonomy, then merges only through <code>kiln merge</code> and reads back the result and cleanup. An INCONCLUSIVE predicate needs your explicit acceptance in every mode.</p>
+        <dl><dt>reads</dt><dd>kiln ready &lt;pr&gt; --json · .kiln/config.yaml · the verify report · kiln status --json</dd><dt>writes</dt><dd>the squash merge, through kiln merge only</dd><dt>runs</dt><dd>kiln ready &lt;pr&gt; --json · kiln -C &lt;main&gt; merge &lt;pr&gt; --json · gh issue view</dd></dl>
+      </article>
+      <article class="skill c-ship" data-stage="ship" id="kiln-release">
+        <div class="skill-top"><code class="skill-name">/kiln-release [version | --pre rc]</code><span class="badges"><span class="gate-chip">◆ release</span><span class="tag">Ship</span></span></div>
+        <p>Cuts a release of what main already has, outside the task loop. Takes the version from <code>kiln release plan</code>, edits CHANGELOG.md for readers, lands it through a release PR, and stops at the release gate in every mode. Then merges, tags the merge commit and publishes.</p>
+        <dl><dt>reads</dt><dd>kiln release plan --json · config.yaml release: · CHANGELOG.md · .github/workflows/*.yml</dd><dt>writes</dt><dd>CHANGELOG.md · version_files · release PR · annotated tag · GitHub Release</dd><dt>runs</dt><dd>kiln release plan --json · gh pr create · kiln merge &lt;pr&gt; --json · git tag -a · gh release create --verify-tag</dd></dl>
+      </article>
+      <article class="skill c-temper" data-stage="temper" id="kiln-log">
+        <div class="skill-top"><code class="skill-name">/kiln-log</code><span class="badges"><span class="tag">Temper</span></span></div>
+        <p>The only writer of task journals. Creates the journal at kiln-start, appends the row every other skill hands over, records the verify report, decisions, skips and retro notes, and commits it. Its final pass runs before ◆2, because <code>kiln merge</code> deletes the branch.</p>
+        <dl><dt>reads</dt><dd>the handed-over row · the journal · the current branch</dd><dt>writes</dt><dd>.kiln/memory/tasks/&lt;n&gt;-&lt;slug&gt;.md, and nothing else</dd><dt>runs</dt><dd>git add &lt;journal&gt; · git commit -m "📝 docs(kiln): log &lt;skill&gt; for #&lt;n&gt;" · git push</dd></dl>
+      </article>
+      <article class="skill c-temper" data-stage="temper" id="kiln-retro">
+        <div class="skill-top"><code class="skill-name">/kiln-retro</code><span class="badges"><span class="tag">Temper</span></span></div>
+        <p>Reads the journals merged since the last retro and turns recurring friction into lessons with confidence levels. Graduates strong, checkable lessons into standing checks, proposes edits to PROJECT.md and to kiln's own skills, runs kiln-verifier maintain when <code>kiln doctor</code> reports drift, and ships it all as one PR.</p>
+        <dl><dt>reads</dt><dd>kiln status --json · lessons.md · tasks/*.md · checks.yaml · .kiln/skills/*/SKILL.md · kiln doctor</dd><dt>writes</dt><dd>lessons.md · checks.yaml · PROJECT.md · skill edits · one PR on kiln/retro-&lt;date&gt;</dd><dt>runs</dt><dd>git worktree add · kiln doctor · gh pr create</dd></dl>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="playbooks">
+  <div class="wrap">
+    <div class="block-head">
+      <div class="eyebrow">Playbooks</div>
+      <h2>Six step lists</h2>
+      <p class="lede">The router picks one playbook per task from its type and copies its todo list into your agent word for word, filling in the <code>&lt;placeholders&gt;</code>. A skipped step is never deleted: it is rewritten in place as <code>skip: &lt;skill&gt; · &lt;reason&gt;</code>. The files live in <code>.kiln/skills/kiln/playbooks/</code>. For how each stage runs, see the <a href="concepts.html#playbooks">playbook matrix</a>.</p>
+    </div>
+    <div class="legend-row" aria-hidden="true"><span class="m run c-any"><i></i>runs in full</span><span class="m light c-any"><i></i>runs light</span><span class="m skip c-any"><i></i>skipped</span><span class="gate-chip">◆ gate</span></div>
+    <div class="pbks">
+      <article class="pbk" id="pb-feature">
+        <header><h3>feature</h3><span class="for">type:feature</span></header>
+        <p class="desc">New behavior a user can see. Every stage runs in full. Review and verification depth follow the size label.</p>
+        <div class="strip" aria-label="Stages: gather run, shape run, fire run, glaze run, ship run, temper run"><span class="m run c-gather" title="Gather: run"><i></i>Gather</span><span class="m run c-shape" title="Shape: run"><i></i>Shape</span><span class="m run c-fire" title="Fire: run"><i></i>Fire</span><span class="m run c-glaze" title="Glaze: run"><i></i>Glaze</span><span class="m run c-ship" title="Ship: run"><i></i>Ship</span><span class="m run c-temper" title="Temper: run"><i></i>Temper</span></div>
+        <ol>
+          <li>kiln-recall · lessons, decisions and past tasks about &lt;area&gt;</li>
+          <li>kiln-issue · &lt;gitmoji&gt; &lt;title&gt; with predicates P1..Pn</li>
+          <li>kiln-explore · map the code in &lt;area&gt;</li>
+          <li class="gate">◆1 kiln-plan · plan comment on #&lt;n&gt;</li>
+          <li>kiln-plan · decision record in the worktree, if the plan made a call</li>
+          <li>kiln-start · ../&lt;repo&gt;.kiln/&lt;n&gt;-&lt;slug&gt;</li>
+          <li>kiln-build · test-first, one predicate at a time</li>
+          <li>kiln-commit · gitmoji commits, reordered before the PR</li>
+          <li>kiln-verify · P1..Pn + standing checks · checker &lt;self|fresh|swarm&gt;</li>
+          <li>kiln-review · &lt;self|independent|adversarial&gt;</li>
+          <li>kiln-pr · ready PR, Closes #&lt;n&gt;</li>
+          <li>kiln-watch · conflicts, threads, CI</li>
+          <li>kiln-verify · swarm at the merge-ready head</li>
+          <li>kiln-log · final pass: skips, retro notes, pushed before ◆2</li>
+          <li class="gate">◆2 kiln-merge · PR #&lt;pr&gt;</li>
+          <li>kiln-retro · offer if retro_queue is 5 or more</li>
+        </ol>
+        <p class="note">Never skips kiln-recall. Only an S feature may waive the plan, and only when you ask. The swarm (step 13) runs for size L.</p>
+      </article>
+      <article class="pbk" id="pb-bug">
+        <header><h3>bug</h3><span class="for">type:bug</span></header>
+        <p class="desc">Something is wrong today. The failing reproduction lands before the fix, and verification sees the bug on the old build and its absence on the new one.</p>
+        <div class="strip" aria-label="Stages: gather run, shape light, fire run, glaze run, ship run, temper run"><span class="m run c-gather" title="Gather: run"><i></i>Gather</span><span class="m light c-shape" title="Shape: light"><i></i>Shape</span><span class="m run c-fire" title="Fire: run"><i></i>Fire</span><span class="m run c-glaze" title="Glaze: run"><i></i>Glaze</span><span class="m run c-ship" title="Ship: run"><i></i>Ship</span><span class="m run c-temper" title="Temper: run"><i></i>Temper</span></div>
+        <ol>
+          <li>kiln-recall · past bugs and lessons about &lt;area&gt;</li>
+          <li>kiln-issue · 🐛 &lt;title&gt; with repro steps and predicates P1..Pn</li>
+          <li>kiln-explore · light: trace the failing path in &lt;area&gt;</li>
+          <li class="gate">◆1 kiln-plan · cause, fix and repro test on #&lt;n&gt;</li>
+          <li>kiln-start · ../&lt;repo&gt;.kiln/&lt;n&gt;-&lt;slug&gt;</li>
+          <li>kiln-build · failing reproduction test, committed alone</li>
+          <li>kiln-build · smallest fix that turns the reproduction green</li>
+          <li>kiln-commit · ✅ test: reproduce … then 🐛 fix: …, in that order</li>
+          <li>kiln-verify · before/after: 2 of 2 on old, 0 of 2 on new · root cause at file:line</li>
+          <li>kiln-review · &lt;self|independent|adversarial&gt;</li>
+          <li>kiln-pr · ready PR, Closes #&lt;n&gt;</li>
+          <li>kiln-watch · conflicts, threads, CI</li>
+          <li>kiln-log · final pass: skips, retro notes, pushed before ◆2</li>
+          <li class="gate">◆2 kiln-merge · PR #&lt;pr&gt;</li>
+        </ol>
+        <p class="note">Never skips the reproduction (step 6) or the before and after check (step 9). An S bug skips the plan: the repro test is the plan.</p>
+      </article>
+      <article class="pbk" id="pb-refactor">
+        <header><h3>refactor</h3><span class="for">type:refactor</span></header>
+        <p class="desc">Same behavior, better shape. Behavior is pinned by tests before anything moves, and the proof is that observable output did not change.</p>
+        <div class="strip" aria-label="Stages: gather run, shape run, fire run, glaze run, ship run, temper run"><span class="m run c-gather" title="Gather: run"><i></i>Gather</span><span class="m run c-shape" title="Shape: run"><i></i>Shape</span><span class="m run c-fire" title="Fire: run"><i></i>Fire</span><span class="m run c-glaze" title="Glaze: run"><i></i>Glaze</span><span class="m run c-ship" title="Ship: run"><i></i>Ship</span><span class="m run c-temper" title="Temper: run"><i></i>Temper</span></div>
+        <ol>
+          <li>kiln-recall · decisions and lessons about &lt;area&gt;</li>
+          <li>kiln-issue · ♻️ &lt;title&gt; naming the target shape, predicates P1..Pn</li>
+          <li>kiln-explore · map callers and tests of &lt;area&gt;</li>
+          <li class="gate">◆1 kiln-plan · smallest safe steps on #&lt;n&gt;</li>
+          <li>kiln-start · ../&lt;repo&gt;.kiln/&lt;n&gt;-&lt;slug&gt;</li>
+          <li>kiln-plan · decision record for the target shape, in the worktree</li>
+          <li>kiln-build · characterization tests pin current behavior, green on the old code</li>
+          <li>kiln-build · refactor in small steps, pinned tests green after each</li>
+          <li>kiln-commit · ✅ test: pin … first, then ♻️ refactor: … steps</li>
+          <li>kiln-verify · pinned tests green · output diffed before and after</li>
+          <li>kiln-review · &lt;self|independent|adversarial&gt;</li>
+          <li>kiln-pr · ready PR, Closes #&lt;n&gt;</li>
+          <li>kiln-watch · conflicts, threads, CI</li>
+          <li>kiln-verify · swarm at the merge-ready head</li>
+          <li>kiln-log · final pass: skips, decisions, retro notes, pushed before ◆2</li>
+          <li class="gate">◆2 kiln-merge · PR #&lt;pr&gt;</li>
+        </ol>
+        <p class="note">Never skips kiln-explore or kiln-plan: a refactor that misses a caller breaks it, and the step order is the whole safety story.</p>
+      </article>
+      <article class="pbk" id="pb-chore">
+        <header><h3>chore</h3><span class="for">type:chore · type:docs</span></header>
+        <p class="desc">Deps, config, docs, cleanup. There is nothing to design, so the plan is skipped and verification runs light.</p>
+        <div class="strip" aria-label="Stages: gather run, shape skip, fire run, glaze light, ship run, temper light"><span class="m run c-gather" title="Gather: run"><i></i>Gather</span><span class="m skip c-shape" title="Shape: skip"><i></i>Shape</span><span class="m run c-fire" title="Fire: run"><i></i>Fire</span><span class="m light c-glaze" title="Glaze: light"><i></i>Glaze</span><span class="m run c-ship" title="Ship: run"><i></i>Ship</span><span class="m light c-temper" title="Temper: light"><i></i>Temper</span></div>
+        <ol>
+          <li>kiln-recall · lessons about &lt;area&gt;</li>
+          <li>kiln-issue · &lt;gitmoji&gt; &lt;title&gt;, short issue</li>
+          <li>kiln-plan · only if the chore hides a design decision</li>
+          <li>kiln-start · ../&lt;repo&gt;.kiln/&lt;n&gt;-&lt;slug&gt;</li>
+          <li>kiln-build · light: make the change</li>
+          <li>kiln-commit · &lt;gitmoji&gt; chore: &lt;what&gt;</li>
+          <li>kiln-verify · light: lint · build · matching standing checks</li>
+          <li>kiln-review · &lt;self|independent&gt;</li>
+          <li>kiln-pr · ready PR, Closes #&lt;n&gt;</li>
+          <li>kiln-watch · conflicts, threads, CI</li>
+          <li>kiln-log · final pass: skips, pushed before ◆2</li>
+          <li class="gate">◆2 kiln-merge · PR #&lt;pr&gt;</li>
+        </ol>
+        <p class="note">The plan runs for size L or when the chore forces a choice. A chore that turns out to change behavior is re-routed as a feature or bug.</p>
+      </article>
+      <article class="pbk" id="pb-investigate">
+        <header><h3>investigate</h3><span class="for">a question</span></header>
+        <p class="desc">Answer a question. No code change, no branch, no PR. The output is a written report and, when a finding should outlive the conversation, a decision record.</p>
+        <div class="strip" aria-label="Stages: gather light, shape run, fire skip, glaze skip, ship skip, temper run"><span class="m light c-gather" title="Gather: light"><i></i>Gather</span><span class="m run c-shape" title="Shape: run"><i></i>Shape</span><span class="m skip c-fire" title="Fire: skip"><i></i>Fire</span><span class="m skip c-glaze" title="Glaze: skip"><i></i>Glaze</span><span class="m skip c-ship" title="Ship: skip"><i></i>Ship</span><span class="m run c-temper" title="Temper: run"><i></i>Temper</span></div>
+        <ol>
+          <li>kiln-recall · past tasks, decisions and lessons about &lt;topic&gt;</li>
+          <li>kiln-issue · only if the user wants the question tracked</li>
+          <li>kiln-explore · read-only map of &lt;topic&gt;</li>
+          <li>report · answer with file:line evidence and a ladder step per claim</li>
+          <li class="skip">skip: kiln-start · kiln-build · kiln-commit · read-only</li>
+          <li class="skip">skip: kiln-verify · nothing to verify</li>
+          <li class="skip">skip: kiln-pr · kiln-watch · kiln-merge · no PR</li>
+          <li>decision record · decisions/&lt;date&gt;-&lt;slug&gt;.md for findings that outlive this conversation</li>
+          <li class="skip">skip: kiln-log · no task worktree, rows go in the report</li>
+        </ol>
+        <p class="note">Steps 5, 6, 7 and 9 are skipped by definition and stay in the list, so the run shows what didn't happen.</p>
+      </article>
+      <article class="pbk" id="pb-release">
+        <header><h3>release</h3><span class="for">shipping</span></header>
+        <p class="desc">Ship what main already has. A release has no issue of its own: it gathers every task merged since the last tag. The release gate stops in every autonomy mode.</p>
+        <div class="strip" aria-label="Stages: gather skip, shape light, fire light, glaze light, ship run, temper light"><span class="m skip c-gather" title="Gather: skip"><i></i>Gather</span><span class="m light c-shape" title="Shape: light"><i></i>Shape</span><span class="m light c-fire" title="Fire: light"><i></i>Fire</span><span class="m light c-glaze" title="Glaze: light"><i></i>Glaze</span><span class="m run c-ship" title="Ship: run"><i></i>Ship</span><span class="m light c-temper" title="Temper: light"><i></i>Temper</span></div>
+        <ol>
+          <li class="skip">skip: kiln-issue · a release collects closed issues</li>
+          <li>kiln-release · preflight and kiln release plan --json → v&lt;version&gt;</li>
+          <li>kiln-release · changelog section and version_files edited for readers</li>
+          <li>kiln-release · 🔖 chore(release): v&lt;version&gt; on kiln/release-v&lt;version&gt;</li>
+          <li>kiln-release · ready release PR, CI green through kiln-watch</li>
+          <li>kiln-log · tasks/release-v&lt;version&gt;.md on the release branch, pushed before the gate</li>
+          <li class="gate">◆ release gate · version, changelog, CI and publish route shown · always stops</li>
+          <li>kiln-release · kiln merge, tag the merge SHA, push the tag, publish</li>
+        </ol>
+        <p class="note">Nothing else may be skipped. If kiln release plan exits 3, the playbook stops and reports why.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-foot"><div class="wrap">
+  <span><b>kiln</b> · MIT licensed · <a href="https://github.com/pavelsimo/kiln">github.com/pavelsimo/kiln</a></span>
+  <span>Fire it up: <code>kiln init</code></span>
+</div></footer>
+
+<script>
+(function () {
+  /* theme toggle, shared key with every docs page */
+  var root = document.documentElement, btn = document.getElementById('themeBtn'), lbl = document.getElementById('themeLbl');
+  function effective() {
+    var t = root.getAttribute('data-theme');
+    if (t) return t;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  function sync() { lbl.textContent = effective() === 'dark' ? 'Light' : 'Dark'; }
+  try { var saved = localStorage.getItem('kiln-theme'); if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved); } catch (e) {}
+  sync();
+  btn.addEventListener('click', function () {
+    var next = effective() === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('kiln-theme', next); } catch (e) {}
+    sync();
+  });
+
+  /* stage filter */
+  var grid = document.getElementById('skillGrid');
+  var btns = document.querySelectorAll('#filters .fbtn');
+  Array.prototype.forEach.call(btns, function (b) {
+    b.addEventListener('click', function () {
+      var stage = b.getAttribute('data-stage');
+      Array.prototype.forEach.call(btns, function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      Array.prototype.forEach.call(grid.children, function (c) {
+        c.hidden = !(stage === 'all' || c.getAttribute('data-stage') === stage);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

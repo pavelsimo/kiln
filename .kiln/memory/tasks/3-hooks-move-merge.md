@@ -29,6 +29,8 @@ kiln users can attach their own shell commands to task transitions (kiln move, k
 | 2026-10-30 23:36 | kiln-issue | opened issue | #3 | ok |
 | 2026-10-30 23:40 | kiln-plan | posted plan | #3 | approved |
 | 2026-10-30 23:44 | kiln-start | worktree ../kiln.kiln/3-hooks-move-merge | kiln/3-hooks-move-merge | ok |
+| 2026-10-30 23:52 | kiln-build | 6 commits, 22 tests | 53adefa | ok |
+| 2026-10-30 23:52 | kiln-commit | 6 commits, lint fixes folded in | 53adefa | ok |
 ## Verify report
 ## Decisions
 - hooks live in personal files only and never veto a transition → decisions/2026-10-30-hooks-personal-no-veto.md
@@ -36,4 +38,5 @@ kiln users can attach their own shell commands to task transitions (kiln move, k
 - skip: kiln-verify swarm · size M, verdict from step 9 covers it
 - skip: kiln-retro · retro_queue 0
 ## Retro notes
+- The fake `gh` on PATH drove real `kiln move` and `kiln merge` end to end (merge pushes to a local bare repo via `remote.origin.pushurl`). DRIVER.md says GitHub commands can't run in the sandbox; this pattern says they can.
 - `git worktree add -b ... origin/main` set the new branch to track origin/main, so a bare `git push` would have targeted main. kiln-start could pass `--no-track`.

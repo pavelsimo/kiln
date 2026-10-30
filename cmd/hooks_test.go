@@ -37,6 +37,9 @@ case "$*" in
     printf '%s' '{"number":9,"title":"✨ add hooks","state":"OPEN","labels":[{"name":"kiln:planned"}],"url":"https://github.com/acme/app/issues/9"}' ;;
   "issue view 9 --json comments") printf '%s' '{"comments":[]}' ;;
   "issue edit 9 "*|"issue comment 9 "*) ;;
+  "pr view 57 --json "*) if [ -f "$OUT/merged" ]; then cat "$OUT/pr-merged.json"; else cat "$OUT/pr.json"; fi ;;
+  "pr merge 57 --squash --match-head-commit "*) touch "$OUT/merged" ;;
+  "api graphql "*) printf '%s' '{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[]}}}}}' ;;
   *) echo "fake gh: unexpected: $*" >&2; exit 1 ;;
 esac
 `
@@ -270,5 +273,145 @@ func TestMoveWithoutHooksIsUnchanged(t *testing.T) {
 	stdout, stderr, code = h.kiln(t, nil, "move", "9", "in-progress")
 	if code != 0 || stdout != "  ✓ #9 moved kiln:planned → kiln:in-progress\n" || stderr != "" {
 		t.Errorf("human (%d): %q, stderr: %q", code, stdout, stderr)
+	}
+}
+
+// readyPR gives #9's worktree a verified, reviewed head and PR #57 for it that kiln ready accepts.
+// Cleanup's remote branch delete goes to a local bare repo, never to GitHub.
+func (h *hookRepo) readyPR(t *testing.T) {
+	t.Helper()
+	wt := func(args ...string) string { return h.r.Git(append([]string{"-C", h.worktree}, args...)...) }
+	if err := os.WriteFile(filepath.Join(h.worktree, "hooks.txt"), []byte("on\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	wt("add", "hooks.txt")
+	wt("commit", "-q", "-m", "✨ feat: add hooks")
+	code := wt("rev-parse", "--short", "HEAD")
+	journal := "---\nissue: 9\n---\n## Journal\n" +
+		"| 2026-10-30 10:00 | kiln-verify | 1 predicate | " + code + " | VERIFIED |\n" +
+		"| 2026-10-30 10:05 | kiln-review | self | " + code + " | PASS |\n"
+	if err := os.MkdirAll(filepath.Join(h.worktree, ".kiln/memory/tasks"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(h.worktree, ".kiln/memory/tasks/9-add-hooks.md"), []byte(journal), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	wt("add", ".kiln/memory/tasks/9-add-hooks.md")
+	wt("commit", "-q", "-m", "📝 docs(kiln): log kiln-review for #9")
+	head := wt("rev-parse", "HEAD")
+
+	h.r.Git("update-ref", "refs/remotes/origin/main", "main")
+	bare := t.TempDir()
+	h.r.Git("init", "-q", "--bare", bare)
+	h.r.Git("config", "remote.origin.pushurl", bare)
+
+	pr := `{"number":57,"title":"✨ add hooks","state":"%s","isDraft":false,"mergeable":"MERGEABLE","reviewDecision":"",` +
+		`"headRefName":"kiln/9-add-hooks","headRefOid":"` + head + `","baseRefName":"main","body":"Closes #9",` +
+		`"url":"https://github.com/acme/app/pull/57","statusCheckRollup":[],"mergeCommit":%s,"closingIssuesReferences":[]}`
+	for name, body := range map[string]string{
+		"pr.json":        strings.Replace(strings.Replace(pr, "%s", "OPEN", 1), "%s", "null", 1),
+		"pr-merged.json": strings.Replace(strings.Replace(pr, "%s", "MERGED", 1), "%s", `{"oid":"feedface00000000000000000000000000000000"}`, 1),
+	} {
+		if err := os.WriteFile(filepath.Join(h.out, name), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestMergeRunsHooksBeforeCleanup(t *testing.T) {
+	h := newHookRepo(t)
+	h.readyPR(t)
+	h.userHooks(t, `hooks:
+  - on: merge
+    run: env | grep '^KILN_' | grep -v '^KILN_NO_HOOKS=' | sort > "$OUT/env"; test -d "$KILN_WORKTREE" && echo present > "$OUT/worktree"; cat > "$OUT/stdin"
+  - on: move
+    run: echo move >> "$OUT/order"
+`)
+	stdout, stderr, code := h.kiln(t, nil, "merge", "57", "--json")
+	if code != 0 {
+		t.Fatalf("merge exited %d\n%s\n%s", code, stdout, stderr)
+	}
+	var rep struct {
+		Merged  bool     `json:"merged"`
+		Cleanup []string `json:"cleanup"`
+		Hooks   []struct {
+			OK bool `json:"ok"`
+		} `json:"hooks"`
+	}
+	if err := json.Unmarshal([]byte(stdout), &rep); err != nil {
+		t.Fatalf("stdout is not JSON: %v\n%s", err, stdout)
+	}
+	if !rep.Merged || len(rep.Hooks) != 1 || !rep.Hooks[0].OK {
+		t.Errorf("report = %+v", rep)
+	}
+
+	// the hook saw the worktree, and cleanup removed it afterwards
+	if h.read("worktree") != "present\n" {
+		t.Errorf("the merge hook ran after the worktree was gone")
+	}
+	if _, err := os.Stat(h.worktree); !os.IsNotExist(err) || !strings.Contains(strings.Join(rep.Cleanup, "\n"), "removed") {
+		t.Errorf("cleanup didn't remove the worktree: %v %v", err, rep.Cleanup)
+	}
+	if h.read("order") != "" {
+		t.Errorf("a move hook ran on merge")
+	}
+
+	want := []string{
+		"KILN_BRANCH=kiln/9-add-hooks",
+		"KILN_EVENT=merge",
+		"KILN_ISSUE=9",
+		"KILN_MERGE_SHA=feedface00000000000000000000000000000000",
+		"KILN_PR=57",
+		"KILN_REPO=acme/app",
+		"KILN_TITLE=✨ add hooks",
+		"KILN_WORKTREE=" + realPath(t, filepath.Dir(h.worktree)) + "/9-add-hooks",
+	}
+	if got := strings.TrimSpace(h.read("env")); got != strings.Join(want, "\n") {
+		t.Errorf("env:\n%s\nwant:\n%s", got, strings.Join(want, "\n"))
+	}
+	var in struct {
+		PR       int    `json:"pr"`
+		Merged   bool   `json:"merged"`
+		MergeSHA string `json:"merge_sha"`
+	}
+	if err := json.Unmarshal([]byte(h.read("stdin")), &in); err != nil || in.PR != 57 || !in.Merged || in.MergeSHA == "" {
+		t.Errorf("stdin report = %+v, %v", in, err)
+	}
+}
+
+func TestMergeSkipsHooks(t *testing.T) {
+	for _, args := range [][]string{
+		{"merge", "57", "--dry-run", "--json"},
+		{"merge", "57", "--no-hooks", "--json"},
+	} {
+		t.Run(args[2], func(t *testing.T) {
+			h := newHookRepo(t)
+			h.readyPR(t)
+			h.userHooks(t, "hooks:\n  - on: merge\n    run: echo ran >> \"$OUT/order\"\n")
+			stdout, stderr, code := h.kiln(t, nil, args...)
+			if code != 0 {
+				t.Fatalf("exit %d\n%s", code, stderr)
+			}
+			if h.read("order") != "" || strings.Contains(stdout, `"hooks"`) {
+				t.Errorf("a hook ran:\n%s", stdout)
+			}
+		})
+	}
+}
+
+func TestMergeWithoutHooksIsUnchanged(t *testing.T) {
+	h := newHookRepo(t)
+	h.readyPR(t)
+	rel, err := filepath.Rel(realPath(t, h.r.Dir), realPath(t, h.worktree))
+	if err != nil {
+		t.Fatal(err)
+	}
+	stdout, stderr, code := h.kiln(t, nil, "merge", "57")
+	want := "  ✓ #57 squash merged · feedfac\n" +
+		"  ✓ removed kiln:planned from #9\n" +
+		"  ✓ worktree " + rel + " removed\n" +
+		"  ✓ branch kiln/9-add-hooks deleted\n"
+	if code != 0 || stderr != "" || stdout != want {
+		t.Errorf("merge (%d):\n%s\nwant:\n%s\nstderr: %q", code, stdout, want, stderr)
 	}
 }

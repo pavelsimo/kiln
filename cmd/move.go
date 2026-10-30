@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/pavelsimo/kiln/internal/hooks"
 	"github.com/pavelsimo/kiln/internal/state"
 )
 
@@ -20,6 +21,8 @@ type moveReport struct {
 	To     string `json:"to"`
 	Moved  bool   `json:"moved"`
 	DryRun bool   `json:"dry_run"`
+
+	Hooks []hooks.Result `json:"hooks,omitempty"`
 }
 
 var moveCmd = &cobra.Command{
@@ -38,7 +41,9 @@ States: needs-triage, ready, planned, in-progress, review, blocked.
   any state     → blocked (needs --reason; kiln comments where it came from)
   blocked       → the state it came from
 
-Anything else is refused with exit code 3.`,
+Anything else is refused with exit code 3.
+
+After a real move, kiln runs your hooks for it (see kiln doctor for the files it reads).`,
 	Example: `  kiln move 42 planned
   kiln move 42 blocked --reason "waiting on the API team's schema"
   kiln move 42 review`,
@@ -101,6 +106,10 @@ Anything else is refused with exit code 3.`,
 				return err
 			}
 			rep.Moved = true
+			rep.Hooks = fireHooks(e, hookEvent{
+				name: hooks.Move, from: from, to: to, issue: n, title: is.Title,
+				env: map[string]string{"KILN_FROM": from, "KILN_TO": to, "KILN_REASON": moveFlags.reason},
+			}, rep)
 		}
 		return e.out(rep, func() {
 			f := "(no kiln label)"
@@ -119,5 +128,6 @@ Anything else is refused with exit code 3.`,
 func init() {
 	moveCmd.Flags().StringVar(&moveFlags.reason, "reason", "", "why the issue is blocked (required for blocked)")
 	moveCmd.Flags().BoolVarP(&moveFlags.dryRun, "dry-run", "n", false, "check the move without changing labels")
+	addNoHooksFlag(moveCmd)
 	rootCmd.AddCommand(moveCmd)
 }

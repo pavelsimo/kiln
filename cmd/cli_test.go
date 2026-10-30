@@ -35,8 +35,9 @@ func kiln(t *testing.T, dir string, args ...string) (string, int) {
 	t.Helper()
 	c := exec.Command(bin, args...)
 	c.Dir = dir
-	// no host git config and no network: the fake origin must never be dialed
-	c.Env = append(os.Environ(), "NO_COLOR=1", "GIT_CONFIG_GLOBAL=/dev/null", "GIT_CONFIG_SYSTEM=/dev/null", "GIT_SSH_COMMAND=false")
+	// no host git config, no network (the fake origin must never be dialed), and an empty
+	// XDG_CONFIG_HOME keeps your own hooks out of the tests
+	c.Env = append(os.Environ(), "NO_COLOR=1", "GIT_CONFIG_GLOBAL=/dev/null", "GIT_CONFIG_SYSTEM=/dev/null", "GIT_SSH_COMMAND=false", "XDG_CONFIG_HOME="+t.TempDir())
 	out, err := c.CombinedOutput()
 	code := 0
 	var ee *exec.ExitError

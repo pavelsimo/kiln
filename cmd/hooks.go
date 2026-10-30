@@ -31,7 +31,12 @@ func fireHooks(e *env, ev hookEvent, report any) []hooks.Result {
 	if noHooks || hooks.Disabled() {
 		return nil
 	}
-	files, errs := hooks.Load(e.root)
+	// the local hook file is gitignored, so from a task worktree it's in the main checkout
+	main := e.root
+	if m, err := e.git.MainWorktree(e.ctx); err == nil {
+		main = m
+	}
+	files, errs := hooks.Load(main)
 	for _, err := range errs {
 		e.ui.Progress("kiln: warning: %v (skipped)", err)
 	}

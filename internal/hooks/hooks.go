@@ -23,7 +23,8 @@ import (
 	"github.com/pavelsimo/kiln/internal/state"
 )
 
-// LocalPath is the per-repo hook file, relative to the repo root. kiln init gitignores it.
+// LocalPath is the per-repo hook file, relative to the main checkout. kiln init gitignores it,
+// so task worktrees don't have their own copy.
 const LocalPath = ".kiln/hooks.local.yaml"
 
 // DefaultTimeout is how long a hook may run when it sets no timeout.
@@ -64,8 +65,9 @@ type Result struct {
 func Disabled() bool { return os.Getenv("KILN_NO_HOOKS") != "" }
 
 // Paths returns where hook files are looked for, in the order they run:
-// $XDG_CONFIG_HOME/kiln/hooks.yaml (or ~/.config/kiln/hooks.yaml), then the repo's local file.
-func Paths(root string) []string {
+// $XDG_CONFIG_HOME/kiln/hooks.yaml (or ~/.config/kiln/hooks.yaml), then the local file in main,
+// the main checkout's root.
+func Paths(main string) []string {
 	var ps []string
 	dir := os.Getenv("XDG_CONFIG_HOME")
 	if dir == "" {
@@ -76,15 +78,15 @@ func Paths(root string) []string {
 	if dir != "" {
 		ps = append(ps, filepath.Join(dir, "kiln", "hooks.yaml"))
 	}
-	return append(ps, filepath.Join(root, LocalPath))
+	return append(ps, filepath.Join(main, LocalPath))
 }
 
 // Load reads every hook file that exists. A file that can't be read or parsed is
 // left out and reported as an error naming it; the others still load.
-func Load(root string) ([]File, []error) {
+func Load(main string) ([]File, []error) {
 	var files []File
 	var errs []error
-	for _, p := range Paths(root) {
+	for _, p := range Paths(main) {
 		b, err := os.ReadFile(p)
 		if errors.Is(err, fs.ErrNotExist) {
 			continue

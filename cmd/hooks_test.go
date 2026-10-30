@@ -76,8 +76,14 @@ func (h *hookRepo) read(name string) string {
 // kiln runs the binary with the hook repo's environment plus extra, keeping stdout and stderr apart.
 func (h *hookRepo) kiln(t *testing.T, extra []string, args ...string) (stdout, stderr string, code int) {
 	t.Helper()
+	return h.kilnIn(t, h.r.Dir, extra, args...)
+}
+
+// kilnIn is kiln, run from dir (say, the task worktree).
+func (h *hookRepo) kilnIn(t *testing.T, dir string, extra []string, args ...string) (stdout, stderr string, code int) {
+	t.Helper()
 	c := exec.Command(bin, args...)
-	c.Dir = h.r.Dir
+	c.Dir = dir
 	c.Env = append(append(os.Environ(), "NO_COLOR=1", "GIT_CONFIG_GLOBAL=/dev/null"), append(h.env, extra...)...)
 	var o, e bytes.Buffer
 	c.Stdout, c.Stderr = &o, &e
@@ -465,5 +471,29 @@ func TestDoctorListsHookFiles(t *testing.T) {
 	if code != 3 || len(hs) != 2 || hs[1].Level != "fail" ||
 		!strings.Contains(hs[1].Detail, `.kiln/hooks.local.yaml: hooks[0].on: "deploy" is not one of move, merge`) || hs[1].Fix == "" {
 		t.Errorf("doctor with a broken file (%d): %+v", code, hs)
+	}
+}
+
+// The local hook file is gitignored, so it only exists in the main checkout. kiln move
+// and kiln doctor usually run from a task worktree, and must still find it there.
+func TestLocalHooksWorkFromATaskWorktree(t *testing.T) {
+	h := newHookRepo(t)
+	h.userHooks(t, "hooks:\n  - on: move\n    run: echo user >> \"$OUT/order\"\n")
+	h.localHooks("hooks:\n  - on: move\n    run: echo local >> \"$OUT/order\"; pwd > \"$OUT/pwd\"\n")
+
+	stdout, stderr, code := h.kilnIn(t, h.worktree, nil, "move", "9", "in-progress", "--json")
+	if code != 0 {
+		t.Fatalf("move from the worktree exited %d\n%s", code, stderr)
+	}
+	if got := h.read("order"); got != "user\nlocal\n" {
+		t.Errorf("order = %q\n%s", got, stdout)
+	}
+	if got := strings.TrimSpace(h.read("pwd")); got != realPath(t, h.worktree) {
+		t.Errorf("hooks should run from the checkout kiln ran in, got %q", got)
+	}
+
+	stdout, _, _ = h.kilnIn(t, h.worktree, nil, "doctor", "--no-github", "--json")
+	if !strings.Contains(stdout, filepath.Join(realPath(t, h.r.Dir), ".kiln/hooks.local.yaml")+" · 1 hook") {
+		t.Errorf("doctor from the worktree doesn't list the main checkout's local file:\n%s", stdout)
 	}
 }

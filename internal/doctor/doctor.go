@@ -108,7 +108,11 @@ func Run(ctx context.Context, opts Options) Report {
 	checkSkills(&r, root, opts.Version)
 	checkLinks(&r, root, cfg.Agents)
 	checkWorktrees(ctx, &r, g, root, cfg)
-	checkHooks(&r, root)
+	main := root
+	if m, err := g.MainWorktree(ctx); err == nil {
+		main = m
+	}
+	checkHooks(&r, root, main)
 	r.Driver = checkDriver(ctx, &r, g, filepath.Join(root, cfg.Verify.Dir), cfg.Verify.Dir)
 
 	r.Healthy = true
@@ -231,11 +235,12 @@ func checkLinks(r *Report, root string, agents []string) {
 	}
 }
 
-// checkHooks lists the hook files kiln will run from. A file it can't parse fails,
-// because kiln move and kiln merge would quietly skip it.
-func checkHooks(r *Report, root string) {
+// checkHooks lists the hook files kiln will run from, including the main checkout's local
+// file when doctor runs in a task worktree. A file it can't parse fails, because kiln move
+// and kiln merge would only warn and skip it.
+func checkHooks(r *Report, root, main string) {
 	short := func(s string) string { return strings.ReplaceAll(s, root+string(filepath.Separator), "") }
-	files, errs := hooks.Load(root)
+	files, errs := hooks.Load(main)
 	for _, f := range files {
 		n := fmt.Sprintf("%d hooks", len(f.Hooks))
 		if len(f.Hooks) == 1 {

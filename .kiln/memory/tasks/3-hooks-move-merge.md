@@ -32,6 +32,7 @@ kiln users can attach their own shell commands to task transitions (kiln move, k
 | 2026-10-30 23:52 | kiln-build | 6 commits, 22 tests | 53adefa | ok |
 | 2026-10-30 23:52 | kiln-commit | 6 commits, lint fixes folded in | 53adefa | ok |
 | 2026-10-31 00:03 | kiln-verify | 13 predicates, fresh checker | f64bb7a | NOT VERIFIED |
+| 2026-10-31 00:04 | kiln-build | fix P2 (loop 2) | 6221580 | ok |
 ## Verify report
 ```
 kiln-verify · #3 · size M · checker: fresh
@@ -62,5 +63,6 @@ evidence       .kiln/verify/evidence/3/   (gitignored)
 - skip: kiln-verify swarm · size M, verdict from step 9 covers it
 - skip: kiln-retro · retro_queue 0
 ## Retro notes
+- Gitignored per-repo files only exist in the main checkout, but kiln commands mostly run from task worktrees. Anything that reads a local, untracked file needs the MainWorktree fallback that setup() uses for config. The fresh checker caught it; the author's tests all ran from the main checkout.
 - The fake `gh` on PATH drove real `kiln move` and `kiln merge` end to end (merge pushes to a local bare repo via `remote.origin.pushurl`). DRIVER.md says GitHub commands can't run in the sandbox; this pattern says they can.
 - `git worktree add -b ... origin/main` set the new branch to track origin/main, so a bare `git push` would have targeted main. kiln-start could pass `--no-track`.

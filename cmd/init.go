@@ -98,6 +98,9 @@ func summary(rep install.Report) string {
 	if n := rep.Count("replace"); n > 0 {
 		parts = append(parts, itoa(n)+" replaced")
 	}
+	if n := rep.Count("update"); n > 0 {
+		parts = append(parts, itoa(n)+" updated")
+	}
 	if n := rep.Count("skip"); n > 0 {
 		parts = append(parts, itoa(n)+" kept")
 	}

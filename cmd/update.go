@@ -38,7 +38,7 @@ merge. New skills are linked into your agents; removed ones are unlinked.`,
 			changed := 0
 			for _, a := range rep.Actions {
 				switch a.Kind {
-				case "create", "replace", "remove", "link", "unlink":
+				case "create", "replace", "update", "remove", "link", "unlink":
 					u.OK("%-8s %s", a.Kind, a.Path)
 					changed++
 				case "conflict":

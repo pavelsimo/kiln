@@ -415,3 +415,55 @@ func TestMergeWithoutHooksIsUnchanged(t *testing.T) {
 		t.Errorf("merge (%d):\n%s\nwant:\n%s\nstderr: %q", code, stdout, want, stderr)
 	}
 }
+
+func TestInitGitignoresLocalHooks(t *testing.T) {
+	r := gittest.New(t)
+	r.Git("remote", "add", "origin", "git@github.com:acme/app.git")
+	if out, code := kiln(t, r.Dir, "init", "--no-github"); code != 0 {
+		t.Fatalf("init (%d):\n%s", code, out)
+	}
+	r.Write(map[string]string{".kiln/hooks.local.yaml": "hooks: []\n"})
+	r.Git("check-ignore", "-q", ".kiln/hooks.local.yaml")
+}
+
+func TestDoctorListsHookFiles(t *testing.T) {
+	h := newHookRepo(t)
+	if _, stderr, code := h.kiln(t, nil, "init", "--no-github"); code != 0 {
+		t.Fatalf("init (%d):\n%s", code, stderr)
+	}
+	h.r.Git("add", "-A")
+	h.r.Git("commit", "-q", "-m", "🔧 chore: install kiln")
+	h.userHooks(t, "hooks:\n  - on: move\n    run: a\n  - on: merge\n    run: b\n")
+	h.localHooks("hooks:\n  - on: move\n    run: c\n")
+
+	type finding struct{ Name, Level, Detail, Fix string }
+	doctor := func() ([]finding, int) {
+		stdout, _, code := h.kiln(t, nil, "doctor", "--no-github", "--json")
+		var doc struct{ Findings []finding }
+		if err := json.Unmarshal([]byte(stdout), &doc); err != nil {
+			t.Fatalf("doctor json: %v\n%s", err, stdout)
+		}
+		var hs []finding
+		for _, f := range doc.Findings {
+			if f.Name == "hooks" {
+				hs = append(hs, f)
+			}
+		}
+		return hs, code
+	}
+
+	hs, code := doctor()
+	user := filepath.Join(h.xdg, "kiln", "hooks.yaml")
+	if code != 0 || len(hs) != 2 ||
+		hs[0] != (finding{"hooks", "ok", user + " · 2 hooks", ""}) ||
+		hs[1] != (finding{"hooks", "ok", ".kiln/hooks.local.yaml · 1 hook", ""}) {
+		t.Errorf("doctor (%d): %+v", code, hs)
+	}
+
+	h.localHooks("hooks:\n  - on: deploy\n    run: c\n")
+	hs, code = doctor()
+	if code != 3 || len(hs) != 2 || hs[1].Level != "fail" ||
+		!strings.Contains(hs[1].Detail, `.kiln/hooks.local.yaml: hooks[0].on: "deploy" is not one of move, merge`) || hs[1].Fix == "" {
+		t.Errorf("doctor with a broken file (%d): %+v", code, hs)
+	}
+}

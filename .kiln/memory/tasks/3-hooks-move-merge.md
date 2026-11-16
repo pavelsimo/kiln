@@ -37,9 +37,13 @@ kiln users can attach their own shell commands to task transitions (kiln move, k
 | 2026-11-16 23:23 | kiln-resume | resumed at kiln-build, rebased on main after #4 | #3 | ok |
 | 2026-11-16 23:23 | kiln-build | fix P2 (loop 3): MainWorktree asks git when the checkout is the main one | 9811beb | ok |
 | 2026-11-16 23:23 | kiln-verify | 12 predicates · self | 9811beb | VERIFIED |
+| 2026-11-16 23:32 | kiln-review | independent reviewer · 1 major (hook timeout left children running), 7 minor or nit | 9811beb | FIX |
+| 2026-11-16 23:32 | kiln-build | fix review finding (loop 2): kill the hook's process group on timeout, reject multi-document hook files | 9f24a1a | ok |
+| 2026-11-16 23:32 | kiln-verify | 12 predicates · self · after review fix | 9f24a1a | VERIFIED |
+| 2026-11-16 23:32 | kiln-review | independent reviewer · re-review, 0 blockers, 0 majors | 9f24a1a | PASS |
 ## Verify report
 ```
-kiln-verify · #3 · size M · checker: self · after fix loop 3, rebased on main
+kiln-verify · #3 · size M · checker: self · after the review fix, rebased on main
 gates          make ci (fmt-check · lint · test · build)   all exit 0
 P1  move hook runs once after the label change, KILN_* set, report on stdin   VERIFIED  4
     ran  go test ./cmd -run TestMoveRunsHooks (real binary, fake gh on PATH)
@@ -51,6 +55,8 @@ P3  merge hooks after merge, before cleanup, KILN_PR and KILN_MERGE_SHA    VERIF
     ran  go test ./cmd -run TestMergeRunsHooksBeforeCleanup
 P4  failing and timed-out hooks warn, exit code unchanged, hooks in JSON    VERIFIED  4
     ran  go test ./cmd -run TestMoveSurvivesFailingHooks · go test ./internal/hooks
+    ran  real kiln move, hook "sleep 7.3141; true", timeout 1s, stderr piped · 1006ms, no child left
+         evidence/3/r3/P4-timeout-kills-children.txt · TestTimeoutKillsWhatTheHookStarted fails without the fix
 P5  hook output never reaches stdout                                        VERIFIED  4
     ran  go test ./cmd -run TestMoveSurvivesFailingHooks (stdout decoded as JSON)
 P6  no hooks on dry-run, exit 3, --no-hooks, KILN_NO_HOOKS                  VERIFIED  4
@@ -62,15 +68,20 @@ P8  no hook files: move and merge output unchanged                          VERI
 P9  config.yaml format unchanged                                            VERIFIED  4
     ran  git diff origin/main --stat -- internal/assets/templates/kiln/config.yaml internal/config · empty
 P10 hooks documented with herdr, tmux and notify-send recipes               VERIFIED  4
-    ran  grep docs/cli.html · herdr 2, tmux 5, notify-send 4 · recipes were run live in round 2, docs unchanged since
+    ran  grep docs/cli.html · herdr 2, tmux 5, notify-send 4 · tmux recipe rerun under a pty on a private tmux server, window created, ok true
 C1  ci-gate (now includes TestSkillsMatchCLI) · C2 docs-no-dashes           VERIFIED  4
-tests audited  33 passing tests in cmd, hooks, install, gitx · the cmd tests drive the real binary
+tests audited  35 passing tests in cmd, hooks, install, gitx · the cmd tests drive the real binary
 findings       advisory, not part of the verdict
     F1  from a linked worktree of a separate-git-dir or submodule repo, the main checkout is still
         taken as the parent of the git dir, so a local hook file there would not be found.
         git worktree list reports the same wrong path, so git offers no direct answer.
         follow-up  🐛 fix: find local hooks from a worktree of a submodule or separate-git-dir repo
-overall        VERIFIED on 9811beb
+    F2  a hook that reads or reconfigures the terminal (sudo or ssh prompt, fzf) is stopped by the
+        kernel and reports a timeout, because hooks now run in their own process group. From the review.
+        follow-up  📝 docs: say hooks can't use the terminal, or ignore SIGTTOU and SIGTTIN in the hook
+    F3  KILN_NO_HOOKS=0 also disables hooks · timeout 0s means the default · an existing wider
+        .gitignore pattern still gets the exact line appended. Review nits, none block.
+overall        VERIFIED on 9f24a1a
 evidence       .kiln/verify/evidence/3/r3/   (gitignored)
 ```
 ## Decisions
@@ -79,6 +90,7 @@ evidence       .kiln/verify/evidence/3/r3/   (gitignored)
 - skip: kiln-verify swarm · size M, verdict from step 9 covers it
 - skip: kiln-retro · retro_queue 0
 ## Retro notes
+- The independent reviewer found a real major the verify rounds never looked for: a hook timeout killed only the shell, so a piped caller waited for the child. Both timeout tests used a bare `sleep`, which the shell execs in place. A timeout test needs a command the shell has to fork for.
 - Loop 2's checker suggested resolving the main checkout from the first `git worktree list` entry. Probing git 2.56 showed that entry is wrong in exactly the layouts it was meant to fix (it prints the git dir). Check a suggested fix against real git before building on it.
 - The loop 2 fix regressed layouts that worked before it. The smallest repair was to ask git for the top level when git-dir equals git-common-dir.
 - gitx.MainWorktree (dirname of --git-common-dir) is wrong for submodules and --separate-git-dir checkouts. setup() uses it for the config fallback too, so that path has the same latent bug.

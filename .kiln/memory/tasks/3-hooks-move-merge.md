@@ -5,7 +5,7 @@ type: feature
 size: M
 playbook: feature
 branch: kiln/3-hooks-move-merge
-pr:
+pr: 5
 ---
 ## Goal
 kiln users can attach their own shell commands to task transitions (kiln move, kiln merge), so tools like herdr, tmux or notify-send react to kiln without kiln knowing about them.
@@ -41,6 +41,7 @@ kiln users can attach their own shell commands to task transitions (kiln move, k
 | 2026-11-16 23:32 | kiln-build | fix review finding (loop 2): kill the hook's process group on timeout, reject multi-document hook files | 9f24a1a | ok |
 | 2026-11-16 23:32 | kiln-verify | 12 predicates · self · after review fix | 9f24a1a | VERIFIED |
 | 2026-11-16 23:32 | kiln-review | independent reviewer · re-review, 0 blockers, 0 majors | 9f24a1a | PASS |
+| 2026-11-16 23:33 | kiln-pr | opened ready PR, moved to review | #5 | ok |
 ## Verify report
 ```
 kiln-verify · #3 · size M · checker: self · after the review fix, rebased on main

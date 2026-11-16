@@ -18,6 +18,7 @@ import (
 	"github.com/pavelsimo/kiln/internal/config"
 	"github.com/pavelsimo/kiln/internal/ghx"
 	"github.com/pavelsimo/kiln/internal/gitx"
+	"github.com/pavelsimo/kiln/internal/hooks"
 	"github.com/pavelsimo/kiln/internal/install"
 	"github.com/pavelsimo/kiln/internal/lock"
 )
@@ -107,6 +108,11 @@ func Run(ctx context.Context, opts Options) Report {
 	checkSkills(&r, root, opts.Version)
 	checkLinks(&r, root, cfg.Agents)
 	checkWorktrees(ctx, &r, g, root, cfg)
+	main := root
+	if m, err := g.MainWorktree(ctx); err == nil {
+		main = m
+	}
+	checkHooks(&r, root, main)
 	r.Driver = checkDriver(ctx, &r, g, filepath.Join(root, cfg.Verify.Dir), cfg.Verify.Dir)
 
 	r.Healthy = true
@@ -226,6 +232,24 @@ func checkLinks(r *Report, root string, agents []string) {
 		default:
 			r.add("links:"+a, OK, fmt.Sprintf("%s: %d skills linked", dir, len(skills)), "")
 		}
+	}
+}
+
+// checkHooks lists the hook files kiln will run from, including the main checkout's local
+// file when doctor runs in a task worktree. A file it can't parse fails, because kiln move
+// and kiln merge would only warn and skip it.
+func checkHooks(r *Report, root, main string) {
+	short := func(s string) string { return strings.ReplaceAll(s, root+string(filepath.Separator), "") }
+	files, errs := hooks.Load(main)
+	for _, f := range files {
+		n := fmt.Sprintf("%d hooks", len(f.Hooks))
+		if len(f.Hooks) == 1 {
+			n = "1 hook"
+		}
+		r.add("hooks", OK, short(f.Path)+" · "+n, "")
+	}
+	for _, err := range errs {
+		r.add("hooks", Fail, short(err.Error()), "fix the file; until then kiln skips it")
 	}
 }
 

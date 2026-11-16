@@ -16,6 +16,7 @@ import (
 	"github.com/pavelsimo/kiln/internal/assets"
 	"github.com/pavelsimo/kiln/internal/config"
 	"github.com/pavelsimo/kiln/internal/ghx"
+	"github.com/pavelsimo/kiln/internal/hooks"
 	"github.com/pavelsimo/kiln/internal/lock"
 )
 
@@ -49,7 +50,7 @@ var Labels = []ghx.Label{
 
 // Action is one thing init or update did (or would do, in a dry run).
 type Action struct {
-	Kind   string `json:"kind"` // create, replace, skip, keep, conflict, link, unlink, label, remove
+	Kind   string `json:"kind"` // create, replace, update, skip, keep, conflict, link, unlink, label, remove
 	Path   string `json:"path"`
 	Detail string `json:"detail,omitempty"`
 }
@@ -207,6 +208,9 @@ func Init(ctx context.Context, opts Options) (Report, error) {
 		return rep, err
 	}
 	if err := pointer(w, agents); err != nil {
+		return rep, err
+	}
+	if err := ignoreLocalHooks(w); err != nil {
 		return rep, err
 	}
 
@@ -380,6 +384,29 @@ const (
 	MarkStart = "<!-- kiln:start -->"
 	MarkEnd   = "<!-- kiln:end -->"
 )
+
+// ignoreLocalHooks makes sure .gitignore lists your personal hook file.
+// It never rewrites what's there; it only appends that one line when it's missing.
+func ignoreLocalHooks(w writer) error {
+	const rel = ".gitignore"
+	cur, err := os.ReadFile(w.abs(rel))
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	for _, l := range strings.Split(string(cur), "\n") {
+		if l = strings.TrimSpace(l); l == hooks.LocalPath || l == "/"+hooks.LocalPath {
+			return nil
+		}
+	}
+	kind := "create"
+	if err == nil {
+		kind = "update"
+	}
+	if len(cur) > 0 && !bytes.HasSuffix(cur, []byte("\n")) {
+		cur = append(cur, '\n')
+	}
+	return w.write(kind, rel, append(cur, hooks.LocalPath+"\n"...))
+}
 
 // UpsertBlock replaces the marked block in doc, or appends it.
 func UpsertBlock(doc, block string) string {

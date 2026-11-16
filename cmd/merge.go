@@ -11,6 +11,7 @@ import (
 
 	"github.com/pavelsimo/kiln/internal/ghx"
 	"github.com/pavelsimo/kiln/internal/gitx"
+	"github.com/pavelsimo/kiln/internal/hooks"
 	"github.com/pavelsimo/kiln/internal/state"
 )
 
@@ -27,6 +28,8 @@ type mergeReport struct {
 	Issue    int      `json:"issue,omitempty"`
 	Cleanup  []string `json:"cleanup"`
 	DryRun   bool     `json:"dry_run"`
+
+	Hooks []hooks.Result `json:"hooks,omitempty"`
 }
 
 var mergeCmd = &cobra.Command{
@@ -36,8 +39,8 @@ var mergeCmd = &cobra.Command{
 
 The merge is pinned to the head commit kiln checked, so a late push can't sneak in.
 Afterwards kiln reads the PR back to confirm it's MERGED, removes kiln:* labels from
-the closed issue, and cleans up: the task's worktree (only if it has no local
-changes), the local branch and the remote branch.
+the closed issue, runs your merge hooks, and cleans up: the task's worktree (only
+if it has no local changes), the local branch and the remote branch.
 
 Exits 3 when kiln ready says no.`,
 	Example: `  kiln merge 57
@@ -84,8 +87,10 @@ Exits 3 when kiln ready says no.`,
 		if pr.MergeCommit != nil {
 			rep.MergeSHA = pr.MergeCommit.Oid
 		}
+		title := pr.Title
 		if rd.Issue > 0 {
 			if is, err := e.gh.Issue(e.ctx, rd.Issue); err == nil {
+				title = is.Title
 				var remove []string
 				for _, l := range is.LabelNames() {
 					if s, ok := strings.CutPrefix(l, "kiln:"); ok && state.Valid(s) {
@@ -97,6 +102,11 @@ Exits 3 when kiln ready says no.`,
 				}
 			}
 		}
+		// before cleanup, so a hook can still reach the worktree (say, to close its terminal)
+		rep.Hooks = fireHooks(e, hookEvent{
+			name: hooks.Merge, issue: rd.Issue, title: title, branch: pr.HeadRefName,
+			env: map[string]string{"KILN_PR": itoa(n), "KILN_MERGE_SHA": rep.MergeSHA},
+		}, rep)
 		if !mergeFlags.noCleanup {
 			rep.Cleanup = append(rep.Cleanup, cleanup(e, pr.HeadRefName)...)
 		}
@@ -170,5 +180,6 @@ func init() {
 	f.BoolVar(&mergeFlags.acceptInconclusive, "accept-inconclusive", false, "merge with an INCONCLUSIVE verify (a human decision at gate 2)")
 	f.BoolVar(&mergeFlags.noCleanup, "no-cleanup", false, "keep the worktree and branches after merging")
 	f.BoolVarP(&mergeFlags.dryRun, "dry-run", "n", false, "run every check, but don't merge")
+	addNoHooksFlag(mergeCmd)
 	rootCmd.AddCommand(mergeCmd)
 }

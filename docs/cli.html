@@ -196,6 +196,7 @@ footer.site-foot code { font: inherit; color: var(--fg-2); background: none; bor
       <a href="#release-plan"><code>release plan</code></a>
       <a href="#move"><code>move</code></a>
       <a href="#merge"><code>merge</code></a>
+      <a href="#hooks">Hooks</a>
       <a href="#files">Files kiln reads</a>
     </nav>
     <article>
@@ -231,7 +232,7 @@ footer.site-foot code { font: inherit; color: var(--fg-2); background: none; bor
     <section id="init">
 <h2>kiln init <span class="kind setup">setup</span></h2>
 <div class="syn">kiln init <span class="a">[--agents claude,codex,cursor]</span> <span class="a">[--no-github]</span> <span class="a">[--force]</span> <span class="a">[--dry-run]</span></div>
-<p>Installs kiln into the repo you're in. It checks for a GitHub remote and a logged-in gh, then writes <code>.kiln/</code> (skills, <code>config.yaml</code>, <code>kiln.lock</code>, the memory and verify skeletons), links each skill into your agents' skills folders, adds a marked pointer block to <code>AGENTS.md</code> and <code>CLAUDE.md</code>, creates 14 labels, and writes an issue form, a PR template and a starter CI workflow.</p>
+<p>Installs kiln into the repo you're in. It checks for a GitHub remote and a logged-in gh, then writes <code>.kiln/</code> (skills, <code>config.yaml</code>, <code>kiln.lock</code>, the memory and verify skeletons), links each skill into your agents' skills folders, adds a marked pointer block to <code>AGENTS.md</code> and <code>CLAUDE.md</code>, creates 14 labels, writes an issue form, a PR template and a starter CI workflow, and adds <code>.kiln/hooks.local.yaml</code> to <code>.gitignore</code> so your <a href="#hooks">hooks</a> stay yours.</p>
 <p>It's safe to run again. Existing files stay as they are.</p>
 <div class="tbl"><table>
   <tr><th>Flag</th><th>What it does</th></tr>
@@ -245,7 +246,7 @@ footer.site-foot code { font: inherit; color: var(--fg-2); background: none; bor
   <span class="k">✓</span> linked → .claude/skills  .agents/skills  .cursor/skills
   <span class="k">✓</span> 14 labels · issue + PR templates · ci.yml
   next: run <span class="e">/kiln-onboard</span> in your agent</pre>
-<p>With <code>--json</code> you get <code>root</code>, <code>dry_run</code>, <code>agents</code>, <code>skills</code>, <code>labels</code> and an <code>actions</code> list of <code>{kind, path, detail}</code>, where kind is one of create, replace, skip, keep or link.</p>
+<p>With <code>--json</code> you get <code>root</code>, <code>dry_run</code>, <code>agents</code>, <code>skills</code>, <code>labels</code> and an <code>actions</code> list of <code>{kind, path, detail}</code>, where kind is one of create, replace, update, skip, keep or link. <code>update</code> means kiln appended a line to a file you own, like <code>.gitignore</code>.</p>
     </section>
 
     <section id="update">
@@ -256,7 +257,7 @@ footer.site-foot code { font: inherit; color: var(--fg-2); background: none; bor
   <li><strong>You edited it:</strong> your file is kept, and the new version is written next to it as <code>&lt;file&gt;.kiln-new</code> for you to merge.</li>
   <li><strong>Kiln no longer ships it:</strong> it's removed if untouched, kept if you edited it.</li>
 </ul>
-<p>New skills get linked into your agents, removed ones get unlinked, and the pointer block is refreshed. Your config and memory are never touched.</p>
+<p>New skills get linked into your agents, removed ones get unlinked, and the pointer block is refreshed. If <code>.gitignore</code> doesn't list <code>.kiln/hooks.local.yaml</code> yet, that one line is appended. Your config and memory are never touched.</p>
 <div class="tbl"><table>
   <tr><th>Flag</th><th>What it does</th></tr>
   <tr><td><code>-n, --dry-run</code></td><td>Show what would change without writing anything.</td></tr>
@@ -268,7 +269,8 @@ footer.site-foot code { font: inherit; color: var(--fg-2); background: none; bor
 
     <section id="doctor">
 <h2>kiln doctor <span class="kind setup">setup</span></h2><div class="syn">kiln doctor <span class="a">[--no-github]</span></div>
-<p>Checks everything kiln depends on: git, the <code>origin</code> remote, gh login, the 14 labels, the config, installed skills against <code>kiln.lock</code>, pending <code>.kiln-new</code> files, agent links (including Windows copies that drifted), the worktree folder, <code>checks.yaml</code>, and the verify driver.</p>
+<p>Checks everything kiln depends on: git, the <code>origin</code> remote, gh login, the 14 labels, the config, installed skills against <code>kiln.lock</code>, pending <code>.kiln-new</code> files, agent links (including Windows copies that drifted), the worktree folder, your <a href="#hooks">hook files</a>, <code>checks.yaml</code>, and the verify driver.</p>
+<p>Each hook file it finds gets a line with its hook count. A hook file it can't parse fails, because <code>kiln move</code> and <code>kiln merge</code> would skip it with only a warning.</p>
 <p>For the driver it counts commits that touched each feature's source files since <code>DRIVER.md</code> or <code>features/</code> last changed. That's how <code>kiln-retro</code> knows when to run <code>kiln-verifier maintain</code>.</p>
 <p>Exits 3 when something fails. Warnings never change the exit code.</p>
 <div class="tbl"><table>
@@ -431,7 +433,7 @@ since  v1.3.0 · 6 commits · 3 left out
     </section>
 
     <section id="move">
-<h2>kiln move <span class="kind write">guarded write</span></h2><div class="syn">kiln move &lt;issue&gt; &lt;state&gt; <span class="a">[--reason &quot;…&quot;]</span> <span class="a">[--dry-run]</span></div>
+<h2>kiln move <span class="kind write">guarded write</span></h2><div class="syn">kiln move &lt;issue&gt; &lt;state&gt; <span class="a">[--reason &quot;…&quot;]</span> <span class="a">[--dry-run]</span> <span class="a">[--no-hooks]</span></div>
 <p>Moves an issue to its next <code>kiln:*</code> label, and refuses anything the state machine doesn't allow. Labels are how anyone can see where a task is on GitHub, so they only move one legal step at a time.</p>
 <div class="tbl"><table>
   <tr><th>From</th><th>Can go to</th></tr>
@@ -445,23 +447,27 @@ since  v1.3.0 · 6 commits · 3 left out
   <tr><td>blocked</td><td>the state it came from</td></tr>
 </table></div>
 <p>Blocking posts a comment with your reason and a hidden marker of where the issue came from, so unblocking can only send it back there. An illegal move exits 3 and says what's allowed.</p>
+<p>After a move that really happened, kiln runs your matching <a href="#hooks">hooks</a>.</p>
 <div class="tbl"><table>
   <tr><th>Flag</th><th>What it does</th></tr>
   <tr><td><code>--reason &lt;text&gt;</code></td><td>Why the issue is blocked. Required for <code>blocked</code>.</td></tr>
   <tr><td><code>-n, --dry-run</code></td><td>Check the move without changing any labels.</td></tr>
+  <tr><td><code>--no-hooks</code></td><td>Don't run your hooks this time.</td></tr>
 </table></div><pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>terminal</span></div><span class="d">$</span> kiln move 42 planned
   <span class="k">✓</span> #42 moved kiln:ready → kiln:planned
 <span class="d">$</span> kiln move 42 review
 kiln: #42: kiln:planned → kiln:review isn&#x27;t a legal move (from kiln:planned you can go to kiln:in-progress, kiln:ready, kiln:blocked)</pre>
+<p>JSON: <code>issue</code>, <code>from</code>, <code>to</code>, <code>moved</code> and <code>dry_run</code>, plus <code>hooks</code> when any ran.</p>
     </section>
 
     <section id="merge">
-<h2>kiln merge <span class="kind write">guarded write</span></h2><div class="syn">kiln merge &lt;pr&gt; <span class="a">[--accept-inconclusive]</span> <span class="a">[--no-cleanup]</span> <span class="a">[--dry-run]</span></div>
+<h2>kiln merge <span class="kind write">guarded write</span></h2><div class="syn">kiln merge &lt;pr&gt; <span class="a">[--accept-inconclusive]</span> <span class="a">[--no-cleanup]</span> <span class="a">[--dry-run]</span> <span class="a">[--no-hooks]</span></div>
 <p>Squash merges a PR, but only after running every <code>kiln ready</code> check and getting a yes. An agent that talks itself into merging still hits this wall.</p>
 <ul>
   <li>The merge is pinned to the head commit kiln just checked, so a late push can't sneak in.</li>
   <li>It reads the PR back until GitHub reports it MERGED, and records the merge commit.</li>
   <li>It removes the <code>kiln:*</code> labels from the closed issue.</li>
+  <li>It runs your merge <a href="#hooks">hooks</a>, while the worktree still exists.</li>
   <li>It cleans up: the task's worktree (only if it has no local changes), the local branch, and the remote branch.</li>
 </ul>
 <div class="tbl"><table>
@@ -469,13 +475,75 @@ kiln: #42: kiln:planned → kiln:review isn&#x27;t a legal move (from kiln:plann
   <tr><td><code>--accept-inconclusive</code></td><td>Merge with an INCONCLUSIVE verify. Only a human makes that call, at ◆2.</td></tr>
   <tr><td><code>--no-cleanup</code></td><td>Keep the worktree and branches.</td></tr>
   <tr><td><code>-n, --dry-run</code></td><td>Run every check, but don't merge.</td></tr>
+  <tr><td><code>--no-hooks</code></td><td>Don't run your hooks this time.</td></tr>
 </table></div><pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>terminal</span></div><span class="d">$</span> kiln merge 57
   <span class="k">✓</span> #57 squash merged · 4e81d07
   <span class="k">✓</span> removed kiln:review from #42
   <span class="k">✓</span> worktree ../app.kiln/42-dark-mode removed
   <span class="k">✓</span> branch kiln/42-dark-mode deleted
   <span class="k">✓</span> remote branch kiln/42-dark-mode deleted</pre>
-<p>JSON: <code>pr</code>, <code>merged</code>, <code>merge_sha</code>, <code>issue</code>, <code>cleanup</code> and <code>dry_run</code>. When kiln ready says no, nothing is merged, the reasons are printed, and it exits 3.</p>
+<p>JSON: <code>pr</code>, <code>merged</code>, <code>merge_sha</code>, <code>issue</code>, <code>cleanup</code> and <code>dry_run</code>, plus <code>hooks</code> when any ran. When kiln ready says no, nothing is merged, the reasons are printed, and it exits 3.</p>
+    </section>
+
+    <section id="hooks">
+<h2>Hooks</h2>
+<p>Kiln doesn't know about your terminal, your multiplexer or your notifications, and it never will. Instead it tells your own shell commands when a task changes state, so whatever you use can react: open a workspace when work starts, ping you when a task is blocked, tidy up after a merge.</p>
+<p>A hook runs right after <code>kiln move</code> or <code>kiln merge</code> succeeds. Hooks never decide anything. Gates stay inside kiln, so a hook can't stop a move or a merge.</p>
+<h3>Where they live</h3>
+<p>Hooks are personal, so they never go in the committed <code>.kiln/config.yaml</code>. Cloning a repo and running <code>kiln move</code> never runs commands someone else wrote. Kiln reads two files, in this order:</p>
+<div class="tbl"><table>
+  <tr><th>File</th><th>For</th></tr>
+  <tr><td><code>~/.config/kiln/hooks.yaml</code></td><td>Every repo you work in. <code>$XDG_CONFIG_HOME</code> moves it.</td></tr>
+  <tr><td><code>.kiln/hooks.local.yaml</code></td><td>Just this repo. It lives in your main checkout, and kiln finds it from any task worktree too. <code>kiln init</code> and <code>kiln update</code> keep it in <code>.gitignore</code>.</td></tr>
+</table></div>
+<pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>~/.config/kiln/hooks.yaml</span></div>hooks:
+  - on: move              <span class="d"># move or merge</span>
+    to: in-progress       <span class="d"># optional: from and to filter moves</span>
+    run: tmux new-window -d -n "kiln-$KILN_ISSUE" -c "$KILN_WORKTREE"
+  - on: merge
+    run: tmux kill-window -t "kiln-$KILN_ISSUE"
+    timeout: 5s           <span class="d"># optional, 10s by default</span></pre>
+<h3>What a hook gets</h3>
+<p>Each hook runs with <code>sh -c</code> from the top of the checkout you ran kiln in, which is often the task's worktree. It gets your environment plus these variables, and the command's <code>--json</code> report on stdin, for scripts that want everything. For <code>kiln merge</code> that report is taken before cleanup, so its <code>cleanup</code> list is not complete yet.</p>
+<div class="tbl"><table>
+  <tr><th>Variable</th><th>Set on</th><th>Value</th></tr>
+  <tr><td><code>KILN_EVENT</code></td><td>both</td><td><code>move</code> or <code>merge</code></td></tr>
+  <tr><td><code>KILN_ISSUE</code>, <code>KILN_TITLE</code></td><td>both</td><td>the issue number and title</td></tr>
+  <tr><td><code>KILN_REPO</code></td><td>both</td><td><code>owner/name</code></td></tr>
+  <tr><td><code>KILN_BRANCH</code>, <code>KILN_WORKTREE</code></td><td>both</td><td>the task branch and its worktree path, empty until <code>kiln-start</code> makes them</td></tr>
+  <tr><td><code>KILN_FROM</code>, <code>KILN_TO</code></td><td>move</td><td>the states, like <code>planned</code> and <code>in-progress</code></td></tr>
+  <tr><td><code>KILN_REASON</code></td><td>move</td><td>the <code>--reason</code> of a move to blocked</td></tr>
+  <tr><td><code>KILN_PR</code>, <code>KILN_MERGE_SHA</code></td><td>merge</td><td>the PR number and the squash commit</td></tr>
+</table></div>
+<p>Hooks inherit everything kiln sees, <code>GH_TOKEN</code> included, so only put commands you trust in these files. On Windows they need an <code>sh</code> on your <code>PATH</code> (Git for Windows ships one).</p>
+<h3>What can't go wrong</h3>
+<ul>
+  <li>Hooks only run after a real transition: never on <code>--dry-run</code>, and never when kiln says no (exit 3).</li>
+  <li>A hook that fails or runs past its timeout is a warning on stderr. Kiln's exit code stays what it would have been, and the JSON report lists each hook as <code>{run, ok, error}</code>.</li>
+  <li>A hook's output goes to stderr, so <code>--json</code> on stdout stays clean for agents.</li>
+  <li>Hooks run one at a time, in file order. Anything slow should background itself with its output redirected, like <code>long-thing &gt;/dev/null 2&gt;&amp;1 &amp;</code>, or it keeps kiln's stderr open until it ends. A hook that runs past its timeout is killed, along with everything it started in the foreground.</li>
+  <li>A hook file kiln can't parse is skipped with a warning, and <code>kiln doctor</code> fails until you fix it.</li>
+  <li><code>--no-hooks</code> skips them for one command, and <code>KILN_NO_HOOKS=1</code> skips them everywhere, say in CI.</li>
+</ul>
+<h3>Recipes</h3>
+<p>Copy what fits into your hook file. Supporting a new tool is a new recipe, never a new kiln release.</p>
+<pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>herdr: a workspace per task</span></div>hooks:
+  - on: move
+    to: in-progress
+    run: herdr workspace create --cwd "$KILN_WORKTREE" --label "#$KILN_ISSUE $KILN_TITLE" --no-focus</pre>
+<pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>tmux: a window per task, gone after the merge</span></div>hooks:
+  - on: move
+    to: in-progress
+    run: tmux new-window -d -n "kiln-$KILN_ISSUE" -c "$KILN_WORKTREE"
+  - on: merge
+    run: tmux kill-window -t "kiln-$KILN_ISSUE" 2&gt;/dev/null || true</pre>
+<pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>notify-send: tell me when something is blocked</span></div>hooks:
+  - on: move
+    to: blocked
+    run: notify-send "kiln #$KILN_ISSUE is blocked" "$KILN_REASON"
+  - on: merge
+    run: notify-send "kiln merged #$KILN_PR" "$KILN_TITLE"</pre>
+<p>On macOS, swap <code>notify-send</code> for <code>osascript -e "display notification \"$KILN_REASON\" with title \"kiln #$KILN_ISSUE\""</code>. To keep a log of everything, read the report from stdin: <code>run: jq -c . &gt;&gt; ~/kiln-events.jsonl</code>.</p>
     </section>
 
     <section id="files">
@@ -489,6 +557,7 @@ kiln: #42: kiln:planned → kiln:review isn&#x27;t a legal move (from kiln:plann
   <tr><td><code>.kiln/verify/checks.yaml</code></td><td>checks, doctor</td><td>id, <code>when.paths</code>, <code>when.labels</code>, predicate, blocking</td></tr>
   <tr><td><code>.kiln/verify/features/*.md</code></td><td>doctor</td><td>the <code>sources</code> globs behind each feature</td></tr>
   <tr><td><code>.kiln/kiln.lock</code></td><td>update, doctor</td><td>a sha256 for every installed skill file</td></tr>
+  <tr><td><code>~/.config/kiln/hooks.yaml</code>, <code>.kiln/hooks.local.yaml</code></td><td>move, merge, doctor</td><td>your <a href="#hooks">hooks</a></td></tr>
 </table></div>
 <p>A journal row looks like this. For kiln-verify and kiln-review, <code>ref</code> is the commit that was checked:</p>
 <pre class="term"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>.kiln/memory/tasks/42-dark-mode.md</span></div>## Journal

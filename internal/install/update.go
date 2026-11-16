@@ -106,6 +106,9 @@ func Update(_ context.Context, opts Options) (Report, error) {
 	if err := pointer(w, agents); err != nil {
 		return rep, err
 	}
+	if err := ignoreLocalHooks(w); err != nil {
+		return rep, err
+	}
 	if !opts.DryRun {
 		if err := next.Save(opts.Root); err != nil {
 			return rep, err

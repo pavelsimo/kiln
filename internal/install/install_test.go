@@ -220,3 +220,62 @@ func TestUpsertBlock(t *testing.T) {
 		t.Errorf("replace: %q", got)
 	}
 }
+
+func TestInitAndUpdateIgnoreLocalHooks(t *testing.T) {
+	read := func(root string) string {
+		b, _ := os.ReadFile(filepath.Join(root, ".gitignore"))
+		return string(b)
+	}
+
+	// a fresh repo gets a .gitignore with the line
+	root, rep := initRepo(t, Options{})
+	if got := read(root); got != ".kiln/hooks.local.yaml\n" {
+		t.Errorf(".gitignore = %q", got)
+	}
+	if rep.Count("create") == 0 || !touchedGitignore(rep, "create") {
+		t.Errorf("init didn't report creating .gitignore: %+v", rep.Actions)
+	}
+
+	// your .gitignore is kept, and the line is appended once, even without a trailing newline
+	root = t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("node_modules/\n*.log"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, rep = initRepo(t, Options{Root: root})
+	if !touchedGitignore(rep, "update") {
+		t.Errorf("init didn't report updating .gitignore: %+v", rep.Actions)
+	}
+	_, rep = initRepo(t, Options{Root: root})
+	if got := read(root); got != "node_modules/\n*.log\n.kiln/hooks.local.yaml\n" {
+		t.Errorf(".gitignore = %q", got)
+	}
+	if touchedGitignore(rep, "update") {
+		t.Errorf("a second init touched .gitignore again")
+	}
+
+	// update adds it to installs made before hooks existed, and dry runs don't write
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("/.kiln/hooks.local.yaml\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if rep, err := Update(context.Background(), Options{Root: root, Version: "0.1.0"}); err != nil || touchedGitignore(rep, "update") {
+		t.Errorf("update with a rooted pattern already there: %+v, %v", rep.Actions, err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("dist/\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if rep, err := Update(context.Background(), Options{Root: root, Version: "0.1.0", DryRun: true}); err != nil || !touchedGitignore(rep, "update") || read(root) != "dist/\n" {
+		t.Errorf("update --dry-run: %+v, %v, %q", rep.Actions, err, read(root))
+	}
+	if _, err := Update(context.Background(), Options{Root: root, Version: "0.1.0"}); err != nil || read(root) != "dist/\n.kiln/hooks.local.yaml\n" {
+		t.Errorf("update: %v, %q", err, read(root))
+	}
+}
+
+func touchedGitignore(rep Report, kind string) bool {
+	for _, a := range rep.Actions {
+		if a.Kind == kind && a.Path == ".gitignore" {
+			return true
+		}
+	}
+	return false
+}

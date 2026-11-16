@@ -5,7 +5,7 @@
 
 - id: ci-gate
   when: { paths: ["**/*.go", "go.mod", "go.sum", ".golangci.yml"] }
-  predicate: make ci exits 0 (fmt-check, lint, test, build)
+  predicate: make ci exits 0 (fmt-check, lint, test, build). The tests include TestSkillsMatchCLI, so skills can only name commands and flags the binary has
   blocking: true
   from: .github/workflows/ci.yml · job Test
 
@@ -14,8 +14,3 @@
   predicate: grep -rnP '\x{2014}|\x{2013}' docs internal/assets/skills README.md finds nothing
   blocking: true
   from: .github/workflows/pages.yml · job Build
-
-- id: skills-match-cli
-  when: { paths: ["cmd/**", "internal/assets/skills/**"] }
-  predicate: every kiln command and flag named in a SKILL.md exists in kiln <cmd> --help
-  blocking: true

@@ -504,7 +504,7 @@ kiln: #42: kiln:planned → kiln:review isn&#x27;t a legal move (from kiln:plann
     run: tmux kill-window -t "kiln-$KILN_ISSUE"
     timeout: 5s           <span class="d"># optional, 10s by default</span></pre>
 <h3>What a hook gets</h3>
-<p>Each hook runs with <code>sh -c</code> from the top of the checkout you ran kiln in, which is often the task's worktree. It gets your environment plus these variables, and the command's <code>--json</code> report on stdin, for scripts that want everything.</p>
+<p>Each hook runs with <code>sh -c</code> from the top of the checkout you ran kiln in, which is often the task's worktree. It gets your environment plus these variables, and the command's <code>--json</code> report on stdin, for scripts that want everything. For <code>kiln merge</code> that report is taken before cleanup, so its <code>cleanup</code> list is not complete yet.</p>
 <div class="tbl"><table>
   <tr><th>Variable</th><th>Set on</th><th>Value</th></tr>
   <tr><td><code>KILN_EVENT</code></td><td>both</td><td><code>move</code> or <code>merge</code></td></tr>
@@ -521,7 +521,7 @@ kiln: #42: kiln:planned → kiln:review isn&#x27;t a legal move (from kiln:plann
   <li>Hooks only run after a real transition: never on <code>--dry-run</code>, and never when kiln says no (exit 3).</li>
   <li>A hook that fails or runs past its timeout is a warning on stderr. Kiln's exit code stays what it would have been, and the JSON report lists each hook as <code>{run, ok, error}</code>.</li>
   <li>A hook's output goes to stderr, so <code>--json</code> on stdout stays clean for agents.</li>
-  <li>Hooks run one at a time, in file order. Anything slow should background itself with its output redirected, like <code>long-thing &gt;/dev/null 2&gt;&amp;1 &amp;</code>, or it keeps kiln's stderr open until it ends.</li>
+  <li>Hooks run one at a time, in file order. Anything slow should background itself with its output redirected, like <code>long-thing &gt;/dev/null 2&gt;&amp;1 &amp;</code>, or it keeps kiln's stderr open until it ends. A hook that runs past its timeout is killed, along with everything it started in the foreground.</li>
   <li>A hook file kiln can't parse is skipped with a warning, and <code>kiln doctor</code> fails until you fix it.</li>
   <li><code>--no-hooks</code> skips them for one command, and <code>KILN_NO_HOOKS=1</code> skips them everywhere, say in CI.</li>
 </ul>

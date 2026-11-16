@@ -70,7 +70,8 @@ func TestLoadRejectsBadFiles(t *testing.T) {
 		{"no run", "hooks:\n  - on: move\n", "run: missing"},
 		{"bad state", "hooks:\n  - on: move\n    to: done\n    run: x\n", `to: "done" is not a kiln state`},
 		{"filter on merge", "hooks:\n  - on: merge\n    from: review\n    run: x\n", "from and to only apply to move"},
-		{"negative timeout", "hooks:\n  - on: move\n    run: x\n    timeout: -1s\n", "timeout: must be positive"},
+		{"negative timeout", "hooks:\n  - on: move\n    run: x\n    timeout: -1s\n", "timeout: can't be negative"},
+		{"second document", "hooks:\n  - on: move\n    run: x\n---\nhooks:\n  - on: bogus\n    run: x\n", "more than one YAML document"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

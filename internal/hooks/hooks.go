@@ -114,6 +114,9 @@ func parse(path string, b []byte) (File, error) {
 	if err := dec.Decode(&doc); err != nil && !errors.Is(err, io.EOF) {
 		return File{}, fmt.Errorf("%s: %w", path, err)
 	}
+	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		return File{}, fmt.Errorf("%s: more than one YAML document", path)
+	}
 	var bad []string
 	for i, h := range doc.Hooks {
 		at := fmt.Sprintf("hooks[%d].", i)
@@ -132,7 +135,7 @@ func parse(path string, b []byte) (File, error) {
 			bad = append(bad, at+"from and to only apply to move")
 		}
 		if h.Timeout < 0 {
-			bad = append(bad, at+"timeout: must be positive")
+			bad = append(bad, at+"timeout: can't be negative")
 		}
 	}
 	if len(bad) > 0 {
@@ -192,6 +195,7 @@ func runOne(ctx context.Context, h Hook, vars []string, stdin []byte, dir string
 	cmd.Stdin = bytes.NewReader(stdin)
 	cmd.Stdout = out
 	cmd.Stderr = out
+	ownGroup(cmd)
 	// a hook that starts a background process mustn't hold kiln open through the pipes
 	cmd.WaitDelay = time.Second
 	err := cmd.Run()

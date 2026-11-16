@@ -1,6 +1,6 @@
 # Written by kiln init and kiln update. Don't edit: kiln uses these hashes to
 # tell your edits apart from files it can safely replace.
-version: 2b44e7b-dirty
+version: v0.1.0-1-gd298ddd-dirty
 files:
     skills/kiln-build/SKILL.md: sha256:8611971621d2da012ab54887866094c20122afd4dd176573c0e19e86707db196
     skills/kiln-commit/SKILL.md: sha256:87b14b6c2b819366db9aabf2012993c7f1aefa93e36e099de70ddcda58996f0b
@@ -20,12 +20,12 @@ files:
     skills/kiln-status/SKILL.md: sha256:c54f67dc9747a19c308c657fc6f0c97987df0feb11ed6f2f39f07c14f782c4cd
     skills/kiln-triage/SKILL.md: sha256:18805f84b8fba9fa10b822ed3539916136dd82cd8da777c5b1a527926f82a02e
     skills/kiln-verifier/SKILL.md: sha256:aa1a7ce080b82827fdecba27d312dc588a921fc1281305f6ff28b469515ec262
-    skills/kiln-verify/SKILL.md: sha256:6f667cffdd50c23e4b5e3911e94def94fdd21f9432817268bbff931df80f7221
-    skills/kiln-watch/SKILL.md: sha256:2d6998ba13658b25ac54920d2834dd5a85ddc542b286d577ebbcaa0a47a48d84
-    skills/kiln/SKILL.md: sha256:f7b933e60aadea439acd3e9fcc2a286695f698aa7c99fef6f076eff8c7b05c4a
+    skills/kiln-verify/SKILL.md: sha256:90d77c88a321c0bce9d8856a8b8a51d821c7c635bf05480cc9e7e174db9cc37f
+    skills/kiln-watch/SKILL.md: sha256:42e412c46a9ba8ab8711045aa8320e623a768bd0b725a4d2dc2f4fd92a4f9f6c
+    skills/kiln/SKILL.md: sha256:af8605b92996da953dbd9b6e4f4502264194a137d6cf3e1a00baa21967e22734
     skills/kiln/playbooks/bug.md: sha256:dd980c9b925eb90b35b1e405cbe61f826726fed361228790b4746bd6ced40c15
     skills/kiln/playbooks/chore.md: sha256:47ef0151cc6e407a6510784b7197b9d8b09cccc8982ef955ac7014c1531237cf
-    skills/kiln/playbooks/feature.md: sha256:2211c7f785fd02f9c72b5285dfc0a4976c9e3ccd2e694a5c43c1006681ff0808
+    skills/kiln/playbooks/feature.md: sha256:22a00885a1d62a3db1e13be4e7381304c80f41a8883d3a7bd682807d3a532611
     skills/kiln/playbooks/investigate.md: sha256:d9d41618ba592de38f71b5aba3b5e5c9511749e71399eb04e4233673c7b5a124
     skills/kiln/playbooks/refactor.md: sha256:1959c42e76546df81b9f647a8dd3e65af1b2fd2b6e608457cfe311ba6209cadd
     skills/kiln/playbooks/release.md: sha256:daa8f0b71370df236bd44570f6612937ddcb34daf1f69298e6ceb92964c0d323

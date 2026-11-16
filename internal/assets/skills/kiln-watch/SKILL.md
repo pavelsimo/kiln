@@ -90,7 +90,7 @@ Gets a PR from "opened" to "kiln ready says yes". It works in a fixed order (con
 
    For a release PR there is no issue to block; report it to the person instead. Give kiln-log a Retro note naming the job, so the next retro can turn it into a lesson.
 
-6. Loop: after each fix, run `kiln ready <pr> --json` again and take the first failing check. Checks that are not yours to fix: a stale verdict (run kiln-verify, then kiln-review), REVIEW_REQUIRED from a human (report and stop), a missing `Closes #N` (add it with `gh pr edit <pr> --body-file <file>`). After three rounds with no progress, block the issue with the reason.
+6. Loop: after each fix, run `kiln ready <pr> --json` again and take the first failing check. Checks that are not yours to fix: a stale verdict (run kiln-verify, then kiln-review), REVIEW_REQUIRED from a human (report and stop), a missing `Closes #N` (add it with `gh pr edit <pr> --body-file <file>`). After two rounds with no progress on the same check, stop and ask. If the human can't unblock it now, block the issue with the reason.
 
 ## Writes
 

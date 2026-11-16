@@ -50,6 +50,6 @@ Size L: kiln-plan splits the work into sub-issues. Each sub-issue then runs this
 
 ## Notes
 
-- Step 9 picks its checker from `rigor.<size>.verify`: S `self`, M `fresh`, L runs a normal pass here and the swarm at step 13.
+- Step 9 picks its checker from `rigor.<size>.verify`: S and M `self`, L runs a normal pass here and the swarm at step 13.
 - If kiln-watch pushes code after step 9, the verdict may go stale. kiln-merge finds out through `kiln ready` and sends you back to kiln-verify and kiln-review.
 - Step 14 exists because `kiln merge` deletes the branch and worktree. Anything not pushed before ◆2 is lost.

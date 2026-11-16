@@ -3,12 +3,14 @@ package cmd_test
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/pavelsimo/kiln/internal/assets"
 	"github.com/pavelsimo/kiln/internal/gittest"
 )
 
@@ -33,7 +35,8 @@ func kiln(t *testing.T, dir string, args ...string) (string, int) {
 	t.Helper()
 	c := exec.Command(bin, args...)
 	c.Dir = dir
-	c.Env = append(os.Environ(), "NO_COLOR=1", "GIT_CONFIG_GLOBAL=/dev/null")
+	// no host git config and no network: the fake origin must never be dialed
+	c.Env = append(os.Environ(), "NO_COLOR=1", "GIT_CONFIG_GLOBAL=/dev/null", "GIT_CONFIG_SYSTEM=/dev/null", "GIT_SSH_COMMAND=false")
 	out, err := c.CombinedOutput()
 	code := 0
 	var ee *exec.ExitError
@@ -50,7 +53,7 @@ func TestEndToEnd(t *testing.T) {
 	r.Git("remote", "add", "origin", "git@github.com:acme/app.git")
 
 	out, code := kiln(t, r.Dir, "init", "--no-github")
-	if code != 0 || !strings.Contains(out, "21 skills") || !strings.Contains(out, "/kiln-onboard") {
+	if code != 0 || !strings.Contains(out, fmt.Sprintf("%d skills", len(assets.SkillNames()))) || !strings.Contains(out, "/kiln-onboard") {
 		t.Fatalf("init (%d):\n%s", code, out)
 	}
 	r.Git("add", "-A")

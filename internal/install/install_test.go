@@ -37,8 +37,8 @@ func mustExist(t *testing.T, root string, paths ...string) {
 
 func TestInitTree(t *testing.T) {
 	root, rep := initRepo(t, Options{})
-	if rep.Skills != 21 {
-		t.Errorf("want 21 skills, got %d", rep.Skills)
+	if want := len(assets.SkillNames()); rep.Skills != want {
+		t.Errorf("want %d skills, got %d", want, rep.Skills)
 	}
 	mustExist(
 		t, root,
@@ -98,7 +98,7 @@ func TestInitAgentsAndDryRun(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(root, ".kiln")); !os.IsNotExist(err) {
 		t.Fatal("dry run wrote files")
 	}
-	if rep.Count("create") == 0 || rep.Count("link") != 21 {
+	if rep.Count("create") == 0 || rep.Count("link") != len(assets.SkillNames()) {
 		t.Fatalf("dry run should still report actions: %d creates, %d links", rep.Count("create"), rep.Count("link"))
 	}
 	root, _ = initRepo(t, Options{Agents: []string{"claude"}})
@@ -117,7 +117,7 @@ func TestInitAgentsAndDryRun(t *testing.T) {
 func TestInitCreatesLabels(t *testing.T) {
 	fake := &run.Fake{Responses: map[string]run.Response{"gh label create *": {}}}
 	_, rep := initRepo(t, Options{GH: ghx.New(fake, "")})
-	if rep.Labels != 14 || len(fake.Calls) != 14 {
+	if rep.Labels != len(Labels) || len(fake.Calls) != len(Labels) {
 		t.Fatalf("labels = %d, calls = %d", rep.Labels, len(fake.Calls))
 	}
 	if !strings.Contains(fake.Calls[0], "gh label create kiln:needs-triage --color b48767") || !strings.HasSuffix(fake.Calls[0], "--force") {

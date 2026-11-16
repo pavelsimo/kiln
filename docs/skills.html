@@ -373,7 +373,7 @@ section.block { padding-block: 84px; border-top: 1px solid var(--line-soft); }
       </article>
       <article class="skill c-glaze" data-stage="glaze" id="kiln-verify">
         <div class="skill-top"><code class="skill-name">/kiln-verify</code><span class="badges"><span class="tag">Glaze</span></span></div>
-        <p>Proves the change on the real surface. Turns the acceptance criteria and matching standing checks into predicates, picks the check that fits each surface, drives the running app through DRIVER.md when needed, and audits every test it cites. Each predicate gets VERIFIED, NOT VERIFIED or INCONCLUSIVE with an evidence-ladder step, tied to a commit SHA. M uses a fresh-context checker, L a three-lane swarm.</p>
+        <p>Proves the change on the real surface. Turns the acceptance criteria and matching standing checks into predicates, picks the check that fits each surface, drives the running app through DRIVER.md when needed, and audits every test it cites. Each predicate gets VERIFIED, NOT VERIFIED or INCONCLUSIVE with an evidence-ladder step, tied to a commit SHA. S and M are checked by the author, L by a three-lane swarm. Trouble outside the predicates is reported as a finding, not a failure.</p>
         <dl><dt>reads</dt><dd>the predicates · kiln checks --json · git diff origin/&lt;default&gt;...HEAD · verify/DRIVER.md · verify/features/</dd><dt>writes</dt><dd>report and row through kiln-log · evidence/&lt;issue&gt;/ (gitignored)</dd><dt>runs</dt><dd>kiln checks --json --labels · project gates · driver steps · git worktree add --detach (bugs) · kiln verdict &lt;n&gt; --only verify --json</dd></dl>
       </article>
       <article class="skill c-glaze" data-stage="glaze" id="kiln-verifier">

@@ -1043,8 +1043,8 @@ td:first-child { color: var(--fg); font-weight: 500; white-space: nowrap; }
             <td><b>no gates</b>merges when <code>kiln ready</code> passes: CI green, all VERIFIED, checklist clean</td>
           </tr>
           <tr>
-            <td><span class="sz">M</span>fresh checker · independent reviewer<span class="szd">Several modules, or a change to a public interface.</span></td>
-            <td><b>every step</b>a fresh-context checker runs kiln-verify; UI and API predicates need ladder 5 (seen in the running app); reviewer subagent</td>
+            <td><span class="sz">M</span>self-verify · independent reviewer<span class="szd">Several modules, or a change to a public interface.</span></td>
+            <td><b>every step</b>the author runs kiln-verify; UI and API predicates need ladder 5 (seen in the running app); a fresh-context reviewer subagent</td>
             <td><b>◆1 ◆2</b>reviewer verdict attached to the merge gate</td>
             <td><b>no gates</b>VERIFIED and PASS must hold for the head SHA, or for an older SHA with the same <code>git patch-id</code></td>
           </tr>
@@ -1097,7 +1097,7 @@ td:first-child { color: var(--fg); font-weight: 500; white-space: nowrap; }
         </div>
         <p class="cap">Steps 1 to 3 can back a finding but never earn <code>VERIFIED</code>. At M and L, the surfaces listed in <code>verify.live</code> (UI and API by default) need step 5. Libraries and CLIs are fine at 4.</p>
       </div>
-<pre class="term"><span class="d">›</span> kiln-verify · #42 · size M · checker: fresh
+<pre class="term"><span class="d">›</span> kiln-verify · #42 · size M · checker: self
 <span class="d">gates</span>          pnpm test · lint · tsc --noEmit · build   <span class="k">all exit 0</span>
 <span class="e">P1</span>  toggle in Appearance settings     <span class="k">VERIFIED</span>  5
     <span class="d">ran</span>  driver · settings/appearance · click theme-toggle
@@ -1138,7 +1138,7 @@ td:first-child { color: var(--fg); font-weight: 500; white-space: nowrap; }
       <div class="stack">
         <div class="panel"><h3>The test audit</h3><p>A test counts as evidence only if it calls the real code the way users do, asserts a literal expected value, and would fail if every import returned <code>undefined</code>. Tests that fail the audit are named in the report so they can be fixed.</p></div>
         <div class="panel"><h3>Bug fixes, before and after</h3><p><code>kiln-verify</code> builds the old version in a throwaway worktree, sees the symptom twice there, then sees it gone twice on the new build, on the same surface. It names the root cause at a <code>file:line</code>. A fix that only hides the symptom (a nil check, a swallowed error, a retry) is <code>NOT VERIFIED</code>.</p></div>
-        <div class="panel"><h3>Who checks, by size</h3><p><b>S</b> the author. <b>M</b> a fresh-context checker that gets only the predicates, the diff and the driver. <b>L</b> a swarm at the merge-ready head: one lane reruns the gates, one proves the key behavior live, one audits the diff and the receipts. The live lane is the floor. Verdicts are tied to a SHA. <code>kiln verdict</code> keeps one only for the same commit, the same tree outside <code>.kiln/memory/</code>, or a clean rebase with the same <code>git patch-id</code>.</p></div>
+        <div class="panel"><h3>Who checks, by size</h3><p><b>S and M</b> the author. Set <code>rigor.M.verify</code> to <code>fresh</code> for a separate checker that gets only the predicates, the diff and the driver. <b>L</b> a swarm at the merge-ready head: one lane reruns the gates, one proves the key behavior live, one audits the diff and the receipts. The live lane is the floor. Verdicts are tied to a SHA. <code>kiln verdict</code> keeps one only for the same commit, the same tree outside <code>.kiln/memory/</code>, or a clean rebase with the same <code>git patch-id</code>.</p></div>
       </div>
     </div>
 
@@ -1239,7 +1239,7 @@ Users can switch Settings to a dark theme, and the choice sticks.
 | 2026-10-27 14:09 | kiln-plan | posted plan | #42 | <span class="k">approved</span> |
 | 2026-10-27 14:12 | kiln-start | worktree ../app.kiln/42-dark-mode-settings | kiln/42-dark-mode-settings | ok |
 | 2026-10-27 14:31 | kiln-build | 3 commits, 11 tests | a1c9e0f | ok |
-| 2026-10-27 14:37 | kiln-verify | 5 predicates · fresh | a1c9e0f | <span class="k">VERIFIED</span> |
+| 2026-10-27 14:37 | kiln-verify | 5 predicates · self | a1c9e0f | <span class="k">VERIFIED</span> |
 | 2026-10-27 14:40 | kiln-review | reviewer subagent | a1c9e0f | <span class="k">PASS</span> |
 | 2026-10-27 14:44 | kiln-pr | opened PR | #57 | ok |
 <span class="e">## Verify report</span>
@@ -1313,7 +1313,7 @@ gates: [plan, merge]
 <span class="d"># How hard kiln checks its own work, by size label</span>
 rigor:
   S: { verify: self, review: self }
-  M: { verify: fresh, review: independent }
+  M: { verify: self, review: independent }
   L: { verify: swarm, review: adversarial, force_gates: [plan] }
 
 verify:
@@ -1699,7 +1699,7 @@ Settings page only. Other pages pick up tokens
 in a follow-up.
 
 <span class="e">## Verification</span>
-- kiln-verify: VERIFIED on a1c9e0f · checker fresh
+- kiln-verify: VERIFIED on a1c9e0f · checker self
   · 4 predicates + 1 standing check
 - P1 toggle switches to dark · VERIFIED 5
 - P2 survives reload · VERIFIED 5

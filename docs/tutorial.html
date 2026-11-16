@@ -760,7 +760,7 @@ e2e:       pnpm test:e2e
     <div class="c-temper"><i></i><span>Temper</span></div>
   </div>
   <figure>
-    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>your agent</span></div>  <span class="h">kiln-verify</span> · #42 · size M · checker: fresh
+    <pre class="term"><div class="term-bar"><i></i><i></i><i></i><span>your agent</span></div>  <span class="h">kiln-verify</span> · #42 · size M · checker: self
   <span class="d">gates</span>          pnpm test · lint · tsc --noEmit · build   <span class="k">all exit 0</span>
   <span class="e">P1</span>  toggle switches the page to dark   <span class="k">VERIFIED</span>  5
       <span class="d">ran</span>  driver · settings/appearance · click theme-toggle
@@ -788,9 +788,11 @@ e2e:       pnpm test:e2e
   <p>Each predicate also says how strong its evidence is, on a five step <strong>ladder</strong>: (1) someone said so, (2) here's the line of code, (3) here's the reasoning, (4) a test ran the real code, (5) we watched it happen in the running app. Only 4 and 5 count as proof. Anything you can see on screen or call over HTTP needs a 5 at this size.</p>
   <p>Kiln also audits the tests it leans on. See that rejected test? It only checked that something wasn't empty, so it would have passed even if the feature returned garbage. Kiln won't count it as evidence, and it tells you so you can fix it.</p>
   <p>Every predicate ends up with one of three verdicts: <strong>VERIFIED</strong>, <strong>NOT VERIFIED</strong>, or <strong>INCONCLUSIVE</strong>, which means "I couldn't check this", maybe because a test account was missing. The overall verdict is the weakest of the lot, and kiln never rounds INCONCLUSIVE up to a pass.</p>
-  <p>For an M task, the checking is done by a fresh agent that only gets the predicates, the diff, the commit and the driver. It never saw the build conversation, so it can't be talked into anything. The code review works the same way, with a reviewer that only sees the diff, the issue and <code>PROJECT.md</code>.</p>
+  <p>For an M task, the agent that built the change proves each predicate itself, exactly as written. The code review is where fresh eyes come in: a reviewer that only sees the diff, the issue and <code>PROJECT.md</code>. It never saw the build conversation, so it can't be talked into anything. If you want a separate checker for the proof too, set <code>rigor.M.verify</code> to <code>fresh</code>.</p>
+
+  <p>Sometimes the check turns up trouble nobody asked about, like a setup the issue never mentioned. That goes in the report as a finding with a suggested follow-up issue. It doesn't fail the task.</p>
   <p>Both results are tied to a commit. The report goes into the task's journal, and then kiln asks the binary whether it's on record. That's the <code>kiln verdict</code> call above. <code>--only verify</code> judges just the verify result, since the review hasn't run yet. And <code>same-tree</code> means the only thing that changed since <code>a1c9e0f</code> is the journal commit itself, which the binary ignores, so the verdict still holds.</p>
-  <p>If a predicate comes back <strong>NOT VERIFIED</strong> or the reviewer says <strong>FIX</strong>, the work goes back to the Fire stage and loops: build, commit, verify, review. On the third loop for the same problem, kiln stops and asks you. It all shows up in the task's journal, but you don't have to do anything.</p>
+  <p>If a predicate comes back <strong>NOT VERIFIED</strong> or the reviewer says <strong>FIX</strong>, the work goes back to the Fire stage and loops: build, commit, verify, review. If the same problem fails a second time, kiln stops and asks you: fix it again, file it as a follow-up, or block the task. It all shows up in the task's journal, but you don't have to do anything.</p>
 
   <h3>Gate 2: the merge <span class="tag c-ship">ship</span></h3>
   <div class="strip" aria-label="Stage: Ship">
@@ -1028,10 +1030,10 @@ gates: [plan, merge]
 <span class="d"># How hard kiln checks its own work, by size label</span>
 rigor:
   S: { verify: self, review: self }
-  M: { verify: fresh, review: independent }
+  M: { verify: self, review: independent }
   L: { verify: swarm, review: adversarial, force_gates: [plan] }</pre>
   </div>
-  <p>Notice the two settings are separate. <code>autonomy</code> decides how often kiln stops for you. The task's size decides how hard kiln checks its own work. Turning up autonomy doesn't lower the bar on review. In autopilot, an M task still needs a fresh checker to say VERIFIED and an independent reviewer to say PASS, both still valid for the exact commit being merged. Size L goes further: right before merging, three independent checkers rerun every gate, prove the key behavior live in the app, and audit the diff and the evidence.</p>
+  <p>Notice the two settings are separate. <code>autonomy</code> decides how often kiln stops for you. The task's size decides how hard kiln checks its own work. Turning up autonomy doesn't lower the bar on review. In autopilot, an M task still needs VERIFIED on every predicate and an independent reviewer to say PASS, both still valid for the exact commit being merged. Size L goes further: right before merging, three independent checkers rerun every gate, prove the key behavior live in the app, and audit the diff and the evidence.</p>
   <p>And one rule holds in every mode: <strong>INCONCLUSIVE never merges on its own.</strong> In gated mode you'll see it at the merge gate and can accept it if you know why. Autopilot simply stops and asks.</p>
   <h3>Things kiln always asks about</h3>
   <p>No matter what mode you're in, some actions always stop and wait for a human. These aren't settings, so you can't turn them off by accident:</p>

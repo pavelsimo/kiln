@@ -18,7 +18,7 @@ install: ## Install binary to $GOPATH/bin
 	go install $(LDFLAGS) ./...
 
 test: ## Run tests with coverage
-	go test ./... -coverprofile=coverage.out -covermode=atomic
+	go test ./... -count=1 -coverprofile=coverage.out -covermode=atomic
 
 coverage: test ## Open coverage report in browser
 	go tool cover -html=coverage.out

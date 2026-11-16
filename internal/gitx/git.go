@@ -47,9 +47,15 @@ func (g *Git) TopLevel(ctx context.Context) (string, error) {
 
 // MainWorktree returns the path of the main worktree (the original clone).
 func (g *Git) MainWorktree(ctx context.Context) (string, error) {
-	common, err := g.Run(ctx, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	out, err := g.Run(ctx, "rev-parse", "--path-format=absolute", "--git-dir", "--git-common-dir")
 	if err != nil {
 		return "", err
+	}
+	gitDir, common, _ := strings.Cut(out, "\n")
+	if gitDir == common {
+		// not a linked worktree, so this checkout is the main one. Asking git covers submodules
+		// and --separate-git-dir, where the git dir doesn't sit inside the work tree.
+		return g.TopLevel(ctx)
 	}
 	return filepath.Dir(common), nil
 }

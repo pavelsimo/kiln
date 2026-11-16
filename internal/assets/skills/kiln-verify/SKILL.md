@@ -40,16 +40,21 @@ The tree must be clean. You verify a commit, not a working copy. Uncommitted cha
 
 Never loosen, merge, reinterpret or drop a predicate to make it pass. If one is wrong or impossible to check, report it as INCONCLUSIVE with that reason. Changing it is the human's call, made on the issue.
 
-### 3. Decide who checks, by size
+**Check the predicate as written, and nothing wider.** A predicate covers the setup it names. If it names none, it covers the ordinary one: a normal checkout, the commands in `PROJECT.md`, the surfaces the issue talks about. While checking you may notice trouble the predicate never asked about: an unusual repo layout, an unsupported platform, an input nobody mentioned. That is a **finding**, not a failure. Write it in the report's `findings` block with what you saw and a one-line follow-up issue title. A finding never turns a predicate NOT VERIFIED and never sends the task back to kiln-build. Don't go hunting for them either; the job is the predicates.
 
-| Size | `rigor.<size>.verify` | Who |
+### 3. Decide who checks
+
+Read `rigor.<size>.verify` for the issue's size.
+
+| Setting | Default for | Who |
 |------|------|-----|
-| S | self | you, the author, in this session |
-| M | fresh | a fresh-context checker |
-| L | swarm | three lanes at the merge-ready head |
+| `self` | S and M | you, the author, in this session |
+| `fresh` | none, opt in | a fresh-context checker |
+| `swarm` | L | three lanes at the merge-ready head |
 
-- **M, fresh checker.** Start a subagent with a clean context and give it **only**: the predicate list (P and C, verbatim), the diff, the worktree path and SHA, `DRIVER.md` plus the matching feature files, and this file. Not the plan discussion, not the build conversation, not your opinion of the code. It runs steps 4 to 9 and returns the report. You don't edit its verdicts. If your agent can't start a subagent, say so, run it yourself, and write `checker: self (no subagent)` in the report so the gap is visible.
-- **L, swarm.** Three independent checkers in parallel, each with the same inputs as the M checker:
+- **self.** You run steps 4 to 12 yourself. At M the independent reviewer in kiln-review is the second pair of eyes, so one fresh agent looks at every M change, not two.
+- **fresh.** Start a subagent with a clean context and give it **only**: the predicate list (P and C, verbatim), the diff, the worktree path and SHA, `DRIVER.md` plus the matching feature files, and this file. Not the plan discussion, not the build conversation, not your opinion of the code. It runs steps 4 to 9 and returns the report. You don't edit its verdicts. If your agent can't start a subagent, say so, run it yourself, and write `checker: self (no subagent)` in the report so the gap is visible.
+- **swarm.** Three independent checkers in parallel, each with the same inputs as the fresh checker:
   - **gates lane:** reruns every gate and standing check from a clean state
   - **live lane:** proves the key behavior on the real surface at ladder 5, through the driver
   - **audit lane:** reads the diff and the receipts: runs the test audit, opens the evidence files and confirms they show what the report claims, flags anything out of scope
@@ -145,7 +150,7 @@ Everything goes under `.kiln/verify/evidence/<issue>/` (gitignored): screenshots
 ### 12. Write the report
 
 ```
-kiln-verify · #42 · size M · checker: fresh
+kiln-verify · #42 · size M · checker: self
 gates          pnpm test · lint · tsc --noEmit · build   all exit 0
 P1  toggle in Appearance settings     VERIFIED  5
     ran  driver · settings/appearance · click theme-toggle
@@ -171,6 +176,14 @@ For an INCONCLUSIVE predicate add `why` and `unblock` lines. For a bug add:
 root cause     src/auth/middleware.ts:41 trusts a stale session cookie
 ```
 
+If you noticed anything outside the predicates, add a `findings` block. It is advisory and doesn't change the overall verdict:
+
+```
+findings       advisory, not part of the verdict
+    F1  theme flashes light for a frame on Safari 15 (no predicate covers Safari 15)
+        follow-up  🐛 fix: dark theme flashes on first paint in Safari 15
+```
+
 ### 13. Hand off and route
 
 Give kiln-log the row and the full report (it goes into `## Verify report`). kiln-log commits it after you; the binary ignores `.kiln/memory/` when judging freshness, so that commit doesn't make your verdict stale. Once it's committed, confirm the binary sees it:
@@ -186,6 +199,8 @@ Then:
 - **NOT VERIFIED**: back to kiln-build with the failing predicates as its fix list.
 - **INCONCLUSIVE**: report why and what would unblock it. The playbook continues, but merging will need the human's explicit acceptance at ◆2.
 
+Findings ride along with any of the three. Show them to the human and offer to file each one with kiln-issue. They don't block anything.
+
 ## Writes
 
 - evidence files in `.kiln/verify/evidence/<issue>/` (gitignored)
@@ -197,6 +212,7 @@ Then:
 - Check the surface that changed, never a proxy.
 - Only ladder 4 and 5 earn VERIFIED; live surfaces at M and L need 5.
 - Never loosen, reword or drop a predicate. Never mark a predicate VERIFIED on a step you didn't run at this SHA.
+- Never widen one either. Trouble outside the predicate text is a finding for a follow-up issue, not a NOT VERIFIED.
 - INCONCLUSIVE is honest, not a failure, and never a pass.
 - A checker doesn't fix what it finds. Fixes go through kiln-build, then you verify again.
 - If HEAD moves (outside `.kiln/memory/`), your verdict may be stale. `kiln verdict` decides, not you.
@@ -206,5 +222,5 @@ Then:
 Every predicate has a verdict, ladder step and evidence, the report is written, and kiln-log has the row. The ref is the HEAD SHA you verified, and the result is one of the three exact tokens:
 
 ```
-kiln-verify · 5 predicates, fresh checker · a1c9e0f · VERIFIED
+kiln-verify · 5 predicates, self · a1c9e0f · VERIFIED
 ```

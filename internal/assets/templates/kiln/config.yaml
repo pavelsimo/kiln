@@ -9,7 +9,7 @@ gates: [plan, merge]
 # How hard kiln checks its own work, by size label
 rigor:
   S: { verify: self, review: self }
-  M: { verify: fresh, review: independent }
+  M: { verify: self, review: independent }
   L: { verify: swarm, review: adversarial, force_gates: [plan] }
 
 verify:

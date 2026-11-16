@@ -105,7 +105,13 @@ For each item, in order:
 3. Take the journal row the skill hands back (`skill · action · ref · result`) and pass it to kiln-log. Rows produced before the worktree exists (kiln-recall, kiln-issue, kiln-plan) are held in the conversation and written when kiln-start creates the journal.
 4. Decide whether to stop (step 7). If not, continue.
 
-**Loops.** If kiln-verify returns NOT VERIFIED or kiln-review returns FIX, add new items right after the failed one: `kiln-build · fix P2 (loop 2)`, `kiln-commit`, `kiln-verify`, `kiln-review`. On the third loop for the same predicate or finding, stop and ask. If the human can't unblock it now: `kiln move <n> blocked --reason "<why>"`.
+**Loops.** If kiln-verify returns NOT VERIFIED or kiln-review returns FIX, add new items right after the failed one: `kiln-build · fix P2 (loop 2)`, `kiln-commit`, `kiln-verify`, `kiln-review`. A failure gets one fix loop on its own. If the same predicate or finding fails a second time, stop before starting another loop and ask, with the failing evidence and three answers to pick from:
+
+- **fix it**: run one more loop, then ask again if it still fails
+- **follow up**: the failure is outside what the issue asked for. File it with kiln-issue and carry on. This is only on offer when the predicate as written holds; a predicate agreed at ◆1 is never dropped this way
+- **block**: `kiln move <n> blocked --reason "<why>"`
+
+A `findings` line in a verify report is not a failure and never starts a loop.
 
 **Exit codes.** `1` means git or gh failed: report it. `2` means you called the binary wrong: fix the call. `3` means the answer is no: follow the reason it gives. Never work around a 3.
 
@@ -117,7 +123,7 @@ Gates are fixed places: ◆1 is inside kiln-plan, ◆2 inside kiln-merge, ◆ re
 |---|---|---|---|
 | when it stops | after every step | at each gate listed in `gates:` | only forced gates and hard stops |
 | S · self-verify · self-review | every step | ◆1 ◆2. The plan is a few lines; "ok" approves | no gates. Merges when `kiln ready` passes |
-| M · fresh checker · independent reviewer | every step | ◆1 ◆2. Reviewer verdict shown at ◆2 | no gates. VERIFIED and PASS must hold for the head SHA (or an equal patch-id) |
+| M · self-verify · independent reviewer | every step | ◆1 ◆2. Reviewer verdict shown at ◆2 | no gates. VERIFIED and PASS must hold for the head SHA (or an equal patch-id) |
 | L · verifier swarm · adversarial review | every step | ◆1 ◆2, plus ◆2 for every sub-issue PR | ◆1 forced (`rigor.L.force_gates`). Merges follow |
 
 A gate stops when **any** of these hold:
